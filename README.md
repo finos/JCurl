@@ -121,7 +121,7 @@ Programmatic usage:
 ```java
 //Get a session token
 
-JCURL jcurl = JCurl.builder()
+JCurl jcurl = JCurl.builder()
     .method(JCurl.HttpMethod.POST)
     .keystore("bot.user1.p12")      //Set user certificate for authentication
     .storepass("changeit")
