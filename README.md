@@ -82,7 +82,7 @@ Sample config file:
 }
 ```
 
-Example run:
+Script usage:
 
 ```bash
 #!/usr/bin/env bash
@@ -114,4 +114,54 @@ java -jar jcurl.jar -H sessionToken $skey -H Content-Type application/json -v -d
 # Send a test message
 eval `java -jar jcurl.jar -t mid id -H sessionToken $skey -H keyManagerToken $kmkey -H Content-Type application/json -v -data '{"message":"Hello world!", "format":"TEXT"}' https://localhost.symphony.com:8446/agent/v2/stream/$sid/message/create`
 # Response: {"id":"61YWWE7UReiUoW6HRtWMQH___qdCqJYadA","timestamp":"1480645372422","v2messageType":"V2Message","streamId":"bDF-x322YHs_QuLhGBUjtn___qdCqKffdA","attachments":[],"fromUserId":68719476743,"message":"Hello world!"}
+```
+
+Programmatic usage:
+
+```java
+//Get a session token
+
+JCURL jcurl = JCurl.builder()
+    .method(JCurl.HttpMethod.POST)
+    .keystore("bot.user1.p12")      //Set user certificate for authentication
+    .storepass("changeit")
+    .storetype("pkcs12")
+    .extract("skey", "token")       //Extract the value of the JSON tag "token" to a map entry under "skey"  
+    .build();
+
+HttpURLConnection connection = jcurl.connect("https://localhost.symphony.com:8444/sessionauth/v1/authenticate");
+JCurl.Response response = jcurl.processResponse(connection);
+String sessionToken = response.getTag("skey");  //Retrieve the extracted tag saved as "skey"
+
+//Get session info (returns the requesting user ID)
+
+jcurl = JCurl.builder()
+    .method(JCurl.HttpMethod.GET)               //HTTP GET is the default; this line can be skipped
+    .header("sessionToken", sessionToken)       //Set the session token in the request header
+    .extract("uid", "userId")                   //Extract the user ID from the response as "uid"
+    .build();
+
+connection = jcurl.connect("https://localhost.symphony.com:8443/pod/v1/sessioninfo");
+response = jcurl.processResponse(connection);
+String userId = response.getTag("uid");
+
+System.out.println("User ID: " + userId);
+
+//Create an IM with user 123456
+
+jcurl = JCurl.builder()
+    .method(JCurl.HttpMethod.POST)              //Set implicitly by specifying ".data()"; this line can be skipped
+    .header("sessionToken", sessionToken)       //Set the session token in the request header
+    .data("[123456]")                           //Set the JSON payload of the request
+    .extract("sid", "id")                       //Extract the stream ID of the conversation as "sid"
+    .build();
+
+connection = jcurl.connect("https://localhost.symphony.com:8443/pod/v1/im/create");
+response = jcurl.processResponse(connection);
+String streamId = response.getTag("sid");
+
+System.out.println("Stream ID: " + streamId);
+
+//Print the output of the call
+System.out.println(response.getOutput());       //Prints '{"id": "wFwupr-KY3QW1oEkjE61x3___qsvcXdFdA"}'
 ```
