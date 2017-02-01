@@ -823,22 +823,22 @@ public class JCurl {
 
 
   public class Response {
-    int responseCode;
-    long timeTaken;
-    String cipherSuite;
-    Certificate[] serverCertificates;
-    Certificate[] clientCertificates;
-    Map<String, List<String>> headers = new HashMap<>();
-    String output;
-    Map<String, String> tagMap = new HashMap<>();
-    List<String> tagList = new ArrayList<>();
+    private int responseCode;
+    private long timeTaken;
+    private String cipherSuite;
+    private Certificate[] serverCertificates;
+    private Certificate[] clientCertificates;
+    private Map<String, List<String>> headers = new HashMap<>();
+    private String output;
+    private Map<String, String> tagMap = new HashMap<>();
+    private List<String> tagList = new ArrayList<>();
 
     /**
      * Print response data and optional meta information. Unless a different configuration is specified with
      * JCurl.Builder, only prints response data. Response is interpreted as application/json by default; this
      * can be changed with -H Content-Type your/mimetype.
      */
-    void print() throws CertificateParsingException, IOException {
+    public void print() throws CertificateParsingException, IOException {
       if (verbosity >= 1) {
         printRequestDetails();
       }
@@ -1031,6 +1031,42 @@ public class JCurl {
       }
     }
 
+    public int getResponseCode() {
+      return responseCode;
+    }
+
+    public long getTimeTaken() {
+      return timeTaken;
+    }
+
+    public String getCipherSuite() {
+      return cipherSuite;
+    }
+
+    public Certificate[] getServerCertificates() {
+      return serverCertificates;
+    }
+
+    public Certificate[] getClientCertificates() {
+      return clientCertificates;
+    }
+
+    public Map<String, List<String>> getHeaders() {
+      return headers;
+    }
+
+    public String getOutput() {
+      return output;
+    }
+
+    public String getTag(String key) {
+      return tagMap.get(key);
+    }
+
+    public String getTag(int index) {
+      return tagList.get(index);
+    }
+
   }
 
 
@@ -1069,6 +1105,10 @@ public class JCurl {
    * Perform a HTTP(s) request to the provided URL. Unless a different configuration is specified with JCurl.Builder,
    * performs a GET request with Content-Type: application/json, expecting a HTTP 200 response.
    */
+  public HttpURLConnection connect(URL url) throws IOException {
+    return connect(url.toString());
+  }
+
   public HttpURLConnection connect(String urlString) throws IOException {
     this.url = urlString;
 
