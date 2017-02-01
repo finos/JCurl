@@ -35,8 +35,7 @@ Connection options:
 
 Output options:
 
--t LABEL NODE              Extract NODE from a JSON object returned by the call and return as "LABEL=NODE". Use "." to navigate within the JSON tree. Example: -t uid userSystemInfo.id (r
-eturns "uid=12345").
+-t LABEL NODE              Extract NODE from a JSON object returned by the call and return as "LABEL=NODE". Use "." to navigate within the JSON tree. Example: -t uid userSystemInfo.id (returns "uid=12345").
 -a NODE                    Iterate over a JSON array of objects returned by the call content and extract the value of NODE. See -t for more details.
 -v                         Verbose output. Will display request and response details.
 -vv                        Very verbose output. Will display certificate details.
@@ -45,7 +44,6 @@ eturns "uid=12345").
 General options:
 
 -K, -config                Read request parameters from a JSON file. The format of the config file is "parameter":"value"; multivalued paramters ("headers", "form", "extract") should be JSON objects. To display a sample config file, run jcurl -h config.
-
 -h, -help                  Display this usage text.
 ```
 
