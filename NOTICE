@@ -11,3 +11,10 @@ The following components are provided under the Apache License 2.0. See project 
 
      Jackson Databind (com.fasterxml.jackson.core<.jackson-databind:2.7.3) - https://github.com/FasterXML/jackson-databind
 
+========================================================================
+Eclipse Public License 1.0
+========================================================================
+
+The following components are provided under the Eclipse Public License 1.0. See project link for details.
+
+     Junit (junit.junit:4.12) - http://junit.org/junit4

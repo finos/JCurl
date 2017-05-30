@@ -4,10 +4,114 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.symphony.jcurl</groupId>
-    <artifactId>jcurl</artifactId>
-    <version>0.9.0</version>
+    <parent>
+        <groupId>org.symphonyoss</groupId>
+        <artifactId>symphonyoss</artifactId>
+        <version>2</version>
+    </parent>
 
+    <groupId>org.symphonyoss.symphony</groupId>
+    <artifactId>jcurl</artifactId>
+    <version>0.9.1-SNAPSHOT</version>
+    <name>JCurl</name>
+    <url>https://github.com/symphonyoss/jcurl</url>
+    <description>JSON-aware curl(1) in Java</description>
+
+    <!--
+~
+~ Copyright 2016 The Symphony Software Foundation
+~
+~ Licensed to The Symphony Software Foundation (SSF) under one
+~ or more contributor license agreements.  See the NOTICE file
+~ distributed with this work for additional information
+~ regarding copyright ownership.  The ASF licenses this file
+~ to you under the Apache License, Version 2.0 (the
+~ "License"); you may not use this file except in compliance
+~ with the License.  You may obtain a copy of the License at
+~
+~   http://www.apache.org/licenses/LICENSE-2.0
+~
+~ Unless required by applicable law or agreed to in writing,
+~ software distributed under the License is distributed on an
+~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+~ KIND, either express or implied.  See the License for the
+~ specific language governing permissions and limitations
+~ under the License.
+-->
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/symphonyoss/jcurl.git</connection>
+        <developerConnection>scm:git:git@github.com:symphonyoss/jcurl.git</developerConnection>
+        <url>https://github.com/symphonyoss/jcurl</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>ldrozdz</id>
+            <name>Łukasz Dróżdż</name>
+            <email>lukasz@symphony.com</email>
+            <url>http://github.com/ldrozdz</url>
+            <organization>Symphony Communication Services LLC</organization>
+            <organizationUrl>http://symphony.com</organizationUrl>
+            <roles>
+                <role>Senior Director Platform</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>bruceskingle</id>
+            <name>Bruce Skingle</name>
+            <email>bruce.skingle@symphony.com</email>
+            <url>http://github.com/bruceskingle</url>
+            <organization>Symphony Communication Services LLC</organization>
+            <organizationUrl>http://symphony.com</organizationUrl>
+            <roles>
+                <role>Principal Software Engineer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <contributors>
+        <contributor>
+            <name>Adrian Zarifis</name>
+            <email>adrian.zarifis@symphony.com</email>
+            <organization>Symphony</organization>
+            <roles>
+                <role>QA Engineer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>Daniel Nathanson</name>
+            <email>daniel.nathanson@symphony.com</email>
+            <organization>Symphony Communication Services LLC</organization>
+            <roles>
+                <role>Senior Director Platform Engineering</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>Paul Teyssier</name>
+            <email>p@symphony.com</email>
+            <organization>Symphony Communication Services LLC</organization>
+            <roles>
+                <role>Senior Director Platform</role>
+            </roles>
+        </contributor>
+    </contributors>
+
+    <properties>
+        <jackson.version>2.7.3</jackson.version>
+        <junit.version>4.12</junit.version>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.shade.version>3.0.0</maven.shade.version>
+    </properties>
 
     <build>
         <plugins>
@@ -15,14 +119,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>${maven.shade.version}</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -31,7 +135,8 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.symphonyoss.symphony.jcurl.JCurl</mainClass>
                                 </transformer>
                             </transformers>
@@ -47,7 +152,13 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.7.3</version>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
