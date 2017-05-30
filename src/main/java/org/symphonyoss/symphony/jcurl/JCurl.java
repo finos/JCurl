@@ -1,4 +1,20 @@
-package com.symphony.jcurl;
+/*
+ * Copyright 2016-2017 MessageML - Symphony LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.symphonyoss.symphony.jcurl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -47,35 +64,58 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 /**
- * <pre>JSON-aware curl(1) in Java
- *
- * <b>Usage</b>
- *
- * 1. As a command-line tool:
- *
- * java -jar jcurl.jar [options...] URL
- *
- * 2. As a library:
- *
- * def jcurl = JCurl.builder()
- *  .method(value)
- *  .header(key, value)
- *  .form(key, value)
- *  .keystore(value)
- *  .storetype(value)
- *  .storepass(value)
- *  (...)
- *  .build()
- *
- * def connection = jcurl.connect(url)
- * jcurl.processResponse(connection)
- *
- * 3. Read options from a configuration file:
- *
- * TODO
- * </pre>
+ <h1>JSON-aware curl (1) in Java</h1>
+ <p/>
+ <b>Usage</b>
+ <pre>
+ //Get a session token
+
+ JCurl jcurl = JCurl.builder()
+ .method(JCurl.HttpMethod.POST)
+ .keystore("bot.user1.p12")      //Set user certificate for authentication
+ .storepass("changeit")
+ .storetype("pkcs12")
+ .extract("skey", "token")       //Extract the value of the JSON tag "token" to a map entry under "skey"
+ .build();
+
+ HttpURLConnection connection = jcurl.connect("https://localhost.symphony.com:8444/sessionauth/v1/authenticate");
+ JCurl.Response response = jcurl.processResponse(connection);
+ String sessionToken = response.getTag("skey");  //Retrieve the extracted tag saved as "skey"
+
+ //Get session info (returns the requesting user ID)
+
+ jcurl = JCurl.builder()
+ .method(JCurl.HttpMethod.GET)               //HTTP GET is the default; this line can be skipped
+ .header("sessionToken", sessionToken)       //Set the session token in the request header
+ .extract("uid", "userId")                   //Extract the user ID from the response as "uid"
+ .build();
+
+ connection = jcurl.connect("https://localhost.symphony.com:8443/pod/v1/sessioninfo");
+ response = jcurl.processResponse(connection);
+ String userId = response.getTag("uid");
+
+ System.out.println("User ID: " + userId);
+
+ //Create an IM with user 123456
+
+ jcurl = JCurl.builder()
+ .method(JCurl.HttpMethod.POST)              //Set implicitly by specifying ".data()"; this line can be skipped
+ .header("sessionToken", sessionToken)       //Set the session token in the request header
+ .data("[123456]")                           //Set the JSON payload of the request
+ .extract("sid", "id")                       //Extract the stream ID of the conversation as "sid"
+ .build();
+
+ connection = jcurl.connect("https://localhost.symphony.com:8443/pod/v1/im/create");
+ response = jcurl.processResponse(connection);
+ String streamId = response.getTag("sid");
+
+ System.out.println("Stream ID: " + streamId);
+
+ //Print the output of the call
+ System.out.println(response.getOutput());       //Prints '{"id": "wFwupr-KY3QW1oEkjE61x3___qsvcXdFdA"}'
+ </pre>
  * @author bruce.skingle
- * @author lukasz
+ * @author ldrozdz
  */
 public class JCurl {
 
@@ -96,10 +136,12 @@ public class JCurl {
   private int connectTimeout;
   private int readTimeout;
   private boolean trustAllCerts;
-  private Map<String, String> tagMap = new HashMap<>();
+  private boolean extractCookies;
   private List<String> tagList = new ArrayList<>();
+  private Map<String, String> tagMap = new HashMap<>();
   private Map<String, String> formMap = new HashMap<>();
   private Map<String, String> headerMap = new HashMap<>();
+  private Map<String, String> cookieMap = new HashMap<>();
   private Set<Integer> expectedResponseSet = new HashSet<>();
   private HttpMethod method = HttpMethod.GET;
   private String contentType = "application/json";
@@ -181,9 +223,27 @@ public class JCurl {
     }
 
     /**
+     * Send a custom cookie with the request. <br/>
+     * Example: {@link #header(String, String) header("JSESSIONID", "abcd1234")}
+     */
+    public Builder cookie(String name, String value) {
+      instance.cookieMap.put(name, value);
+      return this;
+    }
+
+    /**
+     * Extract cookies returned by the call as KEY=VALUE pairs.
+     * @param extract
+     * @return
+     */
+    public Builder extractCookies(boolean extract) {
+      instance.extractCookies = extract;
+      return this;
+    }
+
+    /**
      * Extract NODE from a JSON object returned by the call and return as "LABEL=NODE". Use "." to navigate within the
-     * JSON
-     * tree.<br/>
+     * JSON tree.<br/>
      * Example: {@link #extract(String) extract("uid", "userSystemInfo.id")} (returns \"uid=12345\").")
      */
     public Builder extract(String label, String node) {
@@ -472,11 +532,23 @@ public class JCurl {
             builder.extract(tagListNode);
             break;
 
+          case "-c":
+          case "-extract-cookies":
+            builder.extractCookies(true);
+            break;
+
           case "-H":
           case "-header":
             String headerName = getNextArg();
             String headerValue = getNextArg();
             builder.header(headerName, headerValue);
+            break;
+
+          case "-b":
+          case "-cookie":
+            String cookieName = getNextArg();
+            String cookieValue = getNextArg();
+            builder.cookie(cookieName, cookieValue);
             break;
 
           case "-F":
@@ -689,6 +761,12 @@ public class JCurl {
                 builder.header(header.getKey(), header.getValue().asText());
               }
               break;
+            case "cookies":
+              for (Iterator<Map.Entry<String, JsonNode>> cit = value.fields(); cit.hasNext(); ) {
+                Map.Entry<String, JsonNode> cookie = cit.next();
+                builder.cookie(cookie.getKey(), cookie.getValue().asText());
+              }
+              break;
             case "method":
               builder.method(HttpMethod.valueOf(value.asText().toUpperCase()));
               break;
@@ -750,6 +828,11 @@ public class JCurl {
           "Send a POST request with data as \"KEY=VALUE\" pairs corresponding to a HTML form. "
               + "To specify a file, precede the file name with \"@\" (example: -F "
               + "file @/my/test/file.txt). Can be specified multiple times. Sets 'Content-Type: multipart/form-data'.");
+      printOption("-c, -extract-cookies",
+          "Extract cookies returned by the call and return as \"NAME=VALUE\". "
+              + "If multiple cookies are returned, each is output on a new line.");
+      printOption("-b, -cookie KEY VALUE",
+          "Set cookies used by the request. Can be specified multiple times.");
       printOption("-http STATUS",
           "Add HTTP STATUS as an expected response code. By default only HTTP 200 is expected as "
               + "correct status.");
@@ -826,10 +909,11 @@ public class JCurl {
     private int responseCode;
     private long timeTaken;
     private String cipherSuite;
+    private String output;
+    private String contentType;
     private Certificate[] serverCertificates;
     private Certificate[] clientCertificates;
-    private Map<String, List<String>> headers = new HashMap<>();
-    private String output;
+    private Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private Map<String, String> tagMap = new HashMap<>();
     private List<String> tagList = new ArrayList<>();
 
@@ -863,32 +947,42 @@ public class JCurl {
       }
 
       if (output != null) {
-        switch (contentType) {
-          case "application/json":
-            printResponseJson();
-            break;
-          default:
-            System.err.println(output);
-            break;
+        if ("application/json".equalsIgnoreCase(contentType)) {
+          printResponseJson();
+        } else {
+          System.err.println(output);
         }
-
       }
     }
 
     private void printRequestDetails() {
-      StringBuilder out = new StringBuilder("jcurl");
+      StringBuilder out = new StringBuilder("jcurl ");
+
+      out.append("-H ")
+          .append("Content-Type ")
+          .append(JCurl.this.contentType)
+          .append(" ");
+
       for (Map.Entry<String, String> header : headerMap.entrySet()) {
-        out.append("-H " + header.getKey() + " " + header.getValue());
+        out.append("-H ")
+            .append(header.getKey())
+            .append(" ")
+            .append(header.getValue())
+            .append(" ");
       }
 
       if (method.equals(HttpMethod.POST)) {
         if (data != null) {
-          out.append("-data " + data);
+          out.append("-data ")
+              .append(data)
+              .append(" ");
+        } else {
+          out.append("-post");
         }
-        out.append("-post");
       }
 
-      out.append(" " + url);
+      out.append(" ")
+          .append(url);
       System.out.println(out.toString());
     }
 
@@ -928,10 +1022,8 @@ public class JCurl {
           }
 
           System.err.println("*      Hash Code     : " + cert.hashCode());
-          System.err.println("*      PubKey Algo   : "
-              + cert.getPublicKey().getAlgorithm());
-          System.err.println("*      PubKey Format : "
-              + cert.getPublicKey().getFormat());
+          System.err.println("*      PubKey Algo   : " + cert.getPublicKey().getAlgorithm());
+          System.err.println("*      PubKey Format : " + cert.getPublicKey().getFormat());
           System.err.println("\n");
         }
       } catch (IllegalStateException ignored) {}
@@ -1008,6 +1100,10 @@ public class JCurl {
       if (tagList.isEmpty() && tagMap.isEmpty()) {
         System.out.println(jsonNode.toString());
       }
+
+      if (extractCookies) {
+        printCookies();
+      }
     }
 
     private void printTagMap() {
@@ -1028,6 +1124,15 @@ public class JCurl {
     private void printTagList() {
       for (String tag : tagList) {
         System.out.print(tag + " ");
+      }
+    }
+
+    private void printCookies() throws IOException {
+      if (headers != null) {
+        for (String cookie : headers.get("Set-Cookie")) {
+          String[] cookieValues = cookie.split(";");
+          System.out.println(cookieValues[0]);
+        }
       }
     }
 
@@ -1124,8 +1229,26 @@ public class JCurl {
     con.setReadTimeout(readTimeout);
     con.setRequestProperty("User-Agent", "JCurl");
     con.setRequestProperty("Content-Type", contentType);
+
+    // Set headers
     for (Map.Entry<String, String> header : headerMap.entrySet()) {
       con.setRequestProperty(header.getKey(), header.getValue());
+    }
+
+    // Set cookies
+    if (!cookieMap.isEmpty()) {
+      StringBuilder cookieBuilder = new StringBuilder();
+      Iterator<Map.Entry<String, String>> cookies = cookieMap.entrySet().iterator();
+      while (cookies.hasNext()) {
+        Map.Entry<String, String> cookie = cookies.next();
+        cookieBuilder.append(cookie.getKey())
+            .append("=")
+            .append(cookie.getValue());
+        if (cookies.hasNext()) {
+          cookieBuilder.append("; ");
+        }
+      }
+      con.setRequestProperty("Cookie", cookieBuilder.toString());
     }
 
     if (verbosity >= 1) {
@@ -1198,14 +1321,33 @@ public class JCurl {
     long endTime = System.nanoTime();
 
     response.timeTaken = endTime - startTime;
-    response.headers = con.getHeaderFields();
 
+    processResponseHeaders(con, response);
     processResponseCode(con, response);
     processResponseCertificates(con, response);
     processResponseOutput(con, response);
     processResponseTags(response);
 
     return response;
+  }
+
+  private void processResponseHeaders(HttpURLConnection con, Response response) throws IOException {
+    for (Map.Entry<String, List<String>> header : con.getHeaderFields().entrySet()) {
+      String headerName = header.getKey();
+      List<String> headerValue = header.getValue();
+
+      if (headerName != null && headerValue != null) {
+
+        if ("Content-Type".equalsIgnoreCase(headerName)) {
+          String contentType = headerValue.get(0);
+          if (contentType != null) {
+            response.contentType = contentType.split(";")[0];
+          }
+        } else {
+          response.headers.put(headerName, headerValue);
+        }
+      }
+    }
   }
 
   private void processResponseCode(HttpURLConnection con, Response response) throws IOException {
@@ -1216,8 +1358,7 @@ public class JCurl {
     }
   }
 
-  private void processResponseCertificates(HttpURLConnection con, Response response)
-      throws SSLPeerUnverifiedException {
+  private void processResponseCertificates(HttpURLConnection con, Response response) throws SSLPeerUnverifiedException {
     if (con instanceof HttpsURLConnection) {
       HttpsURLConnection secureConn = (HttpsURLConnection) con;
       response.cipherSuite = secureConn.getCipherSuite();

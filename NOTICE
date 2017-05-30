@@ -1,0 +1,13 @@
+JCurl
+Copyright 2016 The Symphony Software Foundation
+
+This product includes software developed at The Symphony Software Foundation (http://symphony.foundation).
+
+========================================================================
+Apache License, Version 2.0
+========================================================================
+
+The following components are provided under the Apache License 2.0. See project link for details.
+
+     Jackson Databind (com.fasterxml.jackson.core<.jackson-databind:2.7.3) - https://github.com/FasterXML/jackson-databind
+

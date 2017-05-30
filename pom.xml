@@ -32,7 +32,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.symphony.jcurl.JCurl</mainClass>
+                                    <mainClass>org.symphonyoss.symphony.jcurl.JCurl</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

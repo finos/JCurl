@@ -69,6 +69,9 @@ Sample config file:
       "Content-Type"   : "application/json",
       "Accept-Charset" : "utf-8"
     },
+    "cookies"   : {
+      "JSESSIONID":     : "abcd1234"  
+    },
     "method"    : "post",
     "data"      : "{\"message\":\"Ping\",\"format\":\"TEXT\"}",
     "form"      : {
