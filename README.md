@@ -24,6 +24,8 @@ Request options:
 -post                      Send a POST request without request body. If neither -post nor -data is specified, sends a GET request.
 -data DATA                 Send a POST request with DATA as request body. Example: -data '{"message": "Hello world!", "format": "TEXT"}'.
 -F, -form KEY VALUE        Send a POST request with data as "KEY=VALUE" pairs corresponding to a HTML form. To specify a file, precede the file name with "@" (example: -F file @/my/test/file.txt). Can be specified multiple times. Sets 'Content-Type: multipart/form-data'.
+-c, -extract-cookies       Extract cookies returned by the call and return as "NAME=VALUE". If multiple cookies are returned, each is output on a new line.
+-b, -cookie KEY VALUE      Set cookies used by the request. Can be specified multiple times.
 -http STATUS               Add HTTP STATUS as an expected response code. By default only HTTP 200 is expected as correct status.
 
 Connection options:
