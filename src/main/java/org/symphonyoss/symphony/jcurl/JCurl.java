@@ -64,58 +64,58 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 /**
- <h1>JSON-aware curl (1) in Java</h1>
- <p/>
- <b>Usage</b>
- <pre>
- //Get a session token
-
- JCurl jcurl = JCurl.builder()
- .method(JCurl.HttpMethod.POST)
- .keystore("bot.user1.p12")      //Set user certificate for authentication
- .storepass("changeit")
- .storetype("pkcs12")
- .extract("skey", "token")       //Extract the value of the JSON tag "token" to a map entry under "skey"
- .build();
-
- HttpURLConnection connection = jcurl.connect("https://localhost.symphony.com:8444/sessionauth/v1/authenticate");
- JCurl.Response response = jcurl.processResponse(connection);
- String sessionToken = response.getTag("skey");  //Retrieve the extracted tag saved as "skey"
-
- //Get session info (returns the requesting user ID)
-
- jcurl = JCurl.builder()
- .method(JCurl.HttpMethod.GET)               //HTTP GET is the default; this line can be skipped
- .header("sessionToken", sessionToken)       //Set the session token in the request header
- .extract("uid", "userId")                   //Extract the user ID from the response as "uid"
- .build();
-
- connection = jcurl.connect("https://localhost.symphony.com:8443/pod/v1/sessioninfo");
- response = jcurl.processResponse(connection);
- String userId = response.getTag("uid");
-
- System.out.println("User ID: " + userId);
-
- //Create an IM with user 123456
-
- jcurl = JCurl.builder()
- .method(JCurl.HttpMethod.POST)              //Set implicitly by specifying ".data()"; this line can be skipped
- .header("sessionToken", sessionToken)       //Set the session token in the request header
- .data("[123456]")                           //Set the JSON payload of the request
- .extract("sid", "id")                       //Extract the stream ID of the conversation as "sid"
- .build();
-
- connection = jcurl.connect("https://localhost.symphony.com:8443/pod/v1/im/create");
- response = jcurl.processResponse(connection);
- String streamId = response.getTag("sid");
-
- System.out.println("Stream ID: " + streamId);
-
- //Print the output of the call
- System.out.println(response.getOutput());       //Prints '{"id": "wFwupr-KY3QW1oEkjE61x3___qsvcXdFdA"}'
- </pre>
+ * <h1>JSON-aware curl (1) in Java</h1>
+ * <b>Usage</b>
+ * <pre>
+ * //Get a session token
+ *
+ * JCurl jcurl = JCurl.builder()
+ * .method(JCurl.HttpMethod.POST)
+ * .keystore("bot.user1.p12")      //Set user certificate for authentication
+ * .storepass("changeit")
+ * .storetype("pkcs12")
+ * .extract("skey", "token")       //Extract the value of the JSON tag "token" to a map entry under "skey"
+ * .build();
+ *
+ * HttpURLConnection connection = jcurl.connect("https://localhost.symphony.com:8444/sessionauth/v1/authenticate");
+ * JCurl.Response response = jcurl.processResponse(connection);
+ * String sessionToken = response.getTag("skey");  //Retrieve the extracted tag saved as "skey"
+ *
+ * //Get session info (returns the requesting user ID)
+ *
+ * jcurl = JCurl.builder()
+ * .method(JCurl.HttpMethod.GET)               //HTTP GET is the default; this line can be skipped
+ * .header("sessionToken", sessionToken)       //Set the session token in the request header
+ * .extract("uid", "userId")                   //Extract the user ID from the response as "uid"
+ * .build();
+ *
+ * connection = jcurl.connect("https://localhost.symphony.com:8443/pod/v1/sessioninfo");
+ * response = jcurl.processResponse(connection);
+ * String userId = response.getTag("uid");
+ *
+ * System.out.println("User ID: " + userId);
+ *
+ * //Create an IM with user 123456
+ *
+ * jcurl = JCurl.builder()
+ * .method(JCurl.HttpMethod.POST)              //Set implicitly by specifying ".data()"; this line can be skipped
+ * .header("sessionToken", sessionToken)       //Set the session token in the request header
+ * .data("[123456]")                           //Set the JSON payload of the request
+ * .extract("sid", "id")                       //Extract the stream ID of the conversation as "sid"
+ * .build();
+ *
+ * connection = jcurl.connect("https://localhost.symphony.com:8443/pod/v1/im/create");
+ * response = jcurl.processResponse(connection);
+ * String streamId = response.getTag("sid");
+ *
+ * System.out.println("Stream ID: " + streamId);
+ *
+ * //Print the output of the call
+ * System.out.println(response.getOutput());       //Prints '{"id": "wFwupr-KY3QW1oEkjE61x3___qsvcXdFdA"}'
+ * </pre>
  * @author bruce.skingle
  * @author ldrozdz
+ * @version $Id: $Id
  */
 public class JCurl {
 
@@ -155,6 +155,15 @@ public class JCurl {
     GET, POST
   }
 
+  /**
+   * <p>Entry point for command-line usage. Call <code>java -jar jcurl.jar</code> for usage info.</p>
+   *
+   * @param argv an array of {@link java.lang.String} objects.
+   * @throws java.io.IOException if any.
+   * @throws java.security.cert.CertificateParsingException if any.
+   * @throws java.security.KeyManagementException if any.
+   * @throws java.security.NoSuchAlgorithmException if any.
+   */
   public static void main(String[] argv)
       throws IOException, CertificateParsingException, KeyManagementException, NoSuchAlgorithmException {
     ConfigParser config = new ConfigParser();
@@ -164,6 +173,11 @@ public class JCurl {
     response.print();
   }
 
+  /**
+   * <p>Create a builder.</p>
+   *
+   * @return a {@link org.symphonyoss.symphony.jcurl.JCurl.Builder} object.
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -181,6 +195,8 @@ public class JCurl {
 
     /**
      * Set the HTTP type of the request. If not set, JCurl uses {@link HttpMethod#GET}.
+     * @param method
+     * @return
      */
     public Builder method(HttpMethod method) {
       instance.method = method;
@@ -188,8 +204,10 @@ public class JCurl {
     }
 
     /**
-     * Send a POST request with DATA as request body. <br/>
+     * Send a POST request with DATA as request body. <br>
      * Example: {@link #data(String) data("{\"message\": \"Hello world!\", \"format\": \"TEXT\"}"}.
+     * @param payload
+     * @return
      */
     public Builder data(String payload) {
       instance.data = payload;
@@ -198,8 +216,11 @@ public class JCurl {
     }
 
     /**
-     * Send a custom header with the request. <br/>
+     * Send a custom header with the request. <br>
      * Example: {@link #header(String, String) header("Content-Type", "application/json")}.
+     * @param name
+     * @param value
+     * @return
      */
     public Builder header(String name, String value) {
       if (name.toLowerCase().equals("content-type")) {
@@ -213,8 +234,11 @@ public class JCurl {
     /**
      * Send a POST request with CONTENT as "key=value" pairs corresponding to a HTML form.
      * To specify a file, precede the file name with \"@\" (example:
-     * {@link #form(String, String) form("file", "@/my/test/file.txt"}). <br/>
+     * {@link #form(String, String) form("file", "@/my/test/file.txt"}). <br>
      * Sets 'Content-Type: multipart/form-data'.
+     * @param name
+     * @param value
+     * @return
      */
     public Builder form(String name, String value) {
       instance.formMap.put(name, value);
@@ -223,8 +247,11 @@ public class JCurl {
     }
 
     /**
-     * Send a custom cookie with the request. <br/>
+     * Send a custom cookie with the request. <br>
      * Example: {@link #header(String, String) header("JSESSIONID", "abcd1234")}
+     * @param name
+     * @param value
+     * @return
      */
     public Builder cookie(String name, String value) {
       instance.cookieMap.put(name, value);
@@ -243,8 +270,11 @@ public class JCurl {
 
     /**
      * Extract NODE from a JSON object returned by the call and return as "LABEL=NODE". Use "." to navigate within the
-     * JSON tree.<br/>
+     * JSON tree.<br>
      * Example: {@link #extract(String) extract("uid", "userSystemInfo.id")} (returns \"uid=12345\").")
+     * @param label
+     * @param node
+     * @return
      */
     public Builder extract(String label, String node) {
       instance.tagMap.put(label, node);
@@ -254,6 +284,8 @@ public class JCurl {
     /**
      * Iterate over a JSON array of objects returned by the call content and extract the value of NODE. See {@link
      * #extract(String, String)} for more details.
+     * @param node
+     * @return
      */
     public Builder extract(String node) {
       instance.tagList.add(node);
@@ -262,6 +294,8 @@ public class JCurl {
 
     /**
      * Add HTTP STATUS as an expected response code. By default only HTTP 200 is expected as correct status.
+     * @param expectedStatus
+     * @return
      */
     public Builder expect(int expectedStatus) {
       instance.expectedResponseSet.add(expectedStatus);
@@ -269,12 +303,14 @@ public class JCurl {
     }
 
     /**
-     * Output verbosity. Currently 4 levels are recognised:<br/>
+     * Output verbosity. Currently 4 levels are recognised:<br>
      *
-     * 0 (default): only displays response content<br/>
-     * 1: adds request and response details<br/>
-     * 2: adds certificate details.<br/>
+     * 0 (default): only displays response content<br>
+     * 1: adds request and response details<br>
+     * 2: adds certificate details.<br>
      * 3: turns on SSL debugging.
+     * @param level
+     * @return
      */
     public Builder verbosity(int level) {
       instance.verbosity = level;
@@ -283,6 +319,8 @@ public class JCurl {
 
     /**
      * The keystore containing the certificate to use for authentication.
+     * @param store
+     * @return
      */
     public Builder keystore(String store) {
       instance.keyStore = store;
@@ -291,6 +329,8 @@ public class JCurl {
 
     /**
      * The keystore type. Supported values: jks, jceks, pkcs11, pkcs12, bks, dks, windows-my.
+     * @param type
+     * @return
      */
     public Builder storetype(String type) {
       instance.storeType = type;
@@ -307,6 +347,8 @@ public class JCurl {
 
     /**
      * The truststore containing the server certificate. If unspecified, the default Java truststore (cacerts) is used.
+     * @param store
+     * @return
      */
     public Builder truststore(String store) {
       instance.trustStore = store;
@@ -315,6 +357,8 @@ public class JCurl {
 
     /**
      * The truststore type. Supported values: jks, jceks, pkcs11, pkcs12, bks, dks, windows-my.
+     * @param type
+     * @return
      */
     public Builder trusttype(String type) {
       instance.trustType = type;
@@ -323,6 +367,8 @@ public class JCurl {
 
     /**
      * The truststore password.
+     * @param pass
+     * @return
      */
     public Builder trustpass(String pass) {
       instance.trustPass = pass;
@@ -330,8 +376,10 @@ public class JCurl {
     }
 
     /**
-     * Proxy the request through the specified URL. Can be specified separately for http and https.<br/>
+     * Proxy the request through the specified URL. Can be specified separately for http and https.<br>
      * Example: {@link #proxy(String) proxy("https://my.proxy.com:8080")}
+     * @param proxy
+     * @return
      */
     public Builder proxy(String proxy) throws MalformedURLException {
       URL url = new URL(proxy);
@@ -352,6 +400,8 @@ public class JCurl {
     /**
      * Bypass the proxy (if defined) for the specified list of |-separated hosts. Supports wildcards.
      * Example: {@link #nonProxyHosts(String) nonProxyHosts("my.host.org|*.otherhost.net")}.
+     * @param hosts
+     * @return
      */
     public Builder nonProxyHosts(String hosts) {
       instance.nonProxyHosts = hosts;
@@ -361,6 +411,8 @@ public class JCurl {
     /**
      * Disable checks for an HTTPS request. Combines {@link #trustAllHostnames(boolean) trustAllHostnames(true)}
      * and {@link #trustAllCertificates(boolean) trustAllCertificates(true)}.
+     * @param disableChecks
+     * @return
      */
     public Builder insecure(boolean disableChecks) {
       if (disableChecks) {
@@ -372,6 +424,8 @@ public class JCurl {
 
     /**
      * Disable SSL hostname verification.
+     * @param disableChecks
+     * @return
      */
     public Builder trustAllHostnames(boolean disableChecks) {
       if (disableChecks) {
@@ -382,6 +436,8 @@ public class JCurl {
 
     /**
      * Disable SSL certificate verification.
+     * @param disableChecks
+     * @return
      */
     public Builder trustAllCertificates(boolean disableChecks) {
       instance.trustAllCerts = disableChecks;
@@ -390,6 +446,8 @@ public class JCurl {
 
     /**
      * How long to wait for a connection to the remote resource.
+     * @param milliseconds
+     * @return
      */
     public Builder connectTimeout(int milliseconds) {
       instance.connectTimeout = milliseconds * 1000;
@@ -398,6 +456,8 @@ public class JCurl {
 
     /**
      * How long to wait for a response from the remote resource.
+     * @param milliseconds
+     * @return
      */
     public Builder readTimeout(int milliseconds) {
       instance.readTimeout = milliseconds * 1000;
@@ -1136,38 +1196,76 @@ public class JCurl {
       }
     }
 
+    /**
+     *
+     * @return
+     */
     public int getResponseCode() {
       return responseCode;
     }
 
+    /**
+     *
+     * @return
+     */
     public long getTimeTaken() {
       return timeTaken;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getCipherSuite() {
       return cipherSuite;
     }
 
+    /**
+     *
+     * @return
+     */
     public Certificate[] getServerCertificates() {
       return serverCertificates;
     }
 
+    /**
+     *
+     * @return
+     */
     public Certificate[] getClientCertificates() {
       return clientCertificates;
     }
 
+    /**
+     *
+     * @return
+     */
     public Map<String, List<String>> getHeaders() {
       return headers;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getOutput() {
       return output;
     }
 
+    /**
+     *
+     * @param key
+     * @return
+     */
     public String getTag(String key) {
       return tagMap.get(key);
     }
 
+    /**
+     *
+     * @param index
+     * @return
+     */
     public String getTag(int index) {
       return tagList.get(index);
     }
@@ -1209,11 +1307,22 @@ public class JCurl {
   /**
    * Perform a HTTP(s) request to the provided URL. Unless a different configuration is specified with JCurl.Builder,
    * performs a GET request with Content-Type: application/json, expecting a HTTP 200 response.
+   *
+   * @param url a {@link java.net.URL} object.
+   * @return a {@link java.net.HttpURLConnection} object.
+   * @throws java.io.IOException if any.
    */
   public HttpURLConnection connect(URL url) throws IOException {
     return connect(url.toString());
   }
 
+  /**
+   * <p>Connect to the provided URL.</p>
+   *
+   * @param urlString a {@link java.lang.String} object.
+   * @return a {@link java.net.HttpURLConnection} object.
+   * @throws java.io.IOException if any.
+   */
   public HttpURLConnection connect(String urlString) throws IOException {
     this.url = urlString;
 
@@ -1310,8 +1419,13 @@ public class JCurl {
   }
 
   /**
-   * Process response data and, if applicable, HTTPS information. The {@link Response} object returned can be printed
+   * Process response data and, if applicable, HTTPS information. The {@link org.symphonyoss.symphony.jcurl.JCurl.Response} object returned can be printed
    * out with response.print().
+   *
+   * @param con a {@link java.net.HttpURLConnection} object.
+   * @return a {@link org.symphonyoss.symphony.jcurl.JCurl.Response} object.
+   * @throws java.io.IOException if any.
+   * @throws java.security.cert.CertificateParsingException if any.
    */
   public Response processResponse(HttpURLConnection con) throws IOException, CertificateParsingException {
     Response response = new Response();
@@ -1423,7 +1537,5 @@ public class JCurl {
       }
     }
   }
-
-
 
 }

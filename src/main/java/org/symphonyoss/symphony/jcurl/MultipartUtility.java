@@ -39,13 +39,11 @@ class MultipartUtility {
   private HttpURLConnection httpConn;
 
   /**
-   * This constructor initializes a new HTTP POST request with content type
-   * is set to multipart/form-data
+   * Initializes a new HTTP POST request with content type set to multipart/form-data
    * @param httpConn
    * @throws IOException
    */
-  MultipartUtility(HttpURLConnection httpConn)
-      throws IOException {
+  MultipartUtility(HttpURLConnection httpConn) throws IOException {
     this.httpConn = httpConn;
     this.httpConn.setDoOutput(true);
     this.boundary = buildBoundary();
@@ -64,8 +62,10 @@ class MultipartUtility {
 
   /**
    * Adds a header field to the request.
+   *
    * @param name - name of the header field
    * @param value - value of the header field
+   * @throws java.io.IOException if any.
    */
   public void addHeaderField(String name, String value) throws IOException {
     writer.writeBytes(name + ": " + value + LINE_FEED);
@@ -111,8 +111,7 @@ class MultipartUtility {
 
   /**
    * Completes the request.
-   * @return a list of Strings as response in case the server returned
-   * status OK, otherwise an exception is thrown.
+   * @return a list of Strings as response in case the server returned status OK, otherwise an exception is thrown.
    * @throws IOException
    */
   void finish() throws IOException {
