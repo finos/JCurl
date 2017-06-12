@@ -113,7 +113,7 @@ eval `java -jar jcurl.jar -t sid roomSystemInfo.id -H sessionToken $skey -H Cont
 # Response: {"roomAttributes":{"name":"Test room","description":"Room for testing","membersCanInvite":true,"discoverable":true,"readOnly":false,"copyProtected":false,"public":true},"roomSystemInfo":{"id":"bDF-x322YHs_QuLhGBUjtn___qdCqKffdA","creationDate":1480645367861,"createdByUserId":68719476743,"active":true}}
  
 # Add user to room
-java -jar jcurl.jar -H sessionToken $skey -H Content-Type application/json -v -data '{"id":'$uid'}' https://localhost.symphony.com:8446/pod/v1/room/$sid/membership/add
+eval `java -jar jcurl.jar -H sessionToken $skey -H Content-Type application/json -v -data '{"id":'$uid'}' https://localhost.symphony.com:8446/pod/v1/room/$sid/membership/add`
 # Response: {"format":"TEXT","message":"Member added"}
  
 # Send a test message
