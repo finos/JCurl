@@ -509,7 +509,7 @@ public class JCurl {
             kmf.init(ks, instance.storePass.toCharArray());
             keyManagers = kmf.getKeyManagers();
           } catch (IOException | CertificateException | KeyStoreException | UnrecoverableKeyException e) {
-            System.err.println("Failed to disable certificate check: " + e.getMessage());
+            System.err.println("Failed to initialize keystore: " + e.getMessage());
           }
         }
 
@@ -524,7 +524,7 @@ public class JCurl {
             tmf.init(ts);
             trustManagers = tmf.getTrustManagers();
           } catch (IOException | CertificateException | KeyStoreException e) {
-            System.err.println("Failed to disable certificate check: " + e.getMessage());
+            System.err.println("Failed to initialize truststore: " + e.getMessage());
           }
         }
 
@@ -533,7 +533,7 @@ public class JCurl {
         SSLContext.setDefault(context);
         HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
       } catch (NoSuchAlgorithmException | KeyManagementException e) {
-        System.err.println("Failed to disable certificate check: " + e.getMessage());
+        System.err.println("Failed to initialize SSL context: " + e.getMessage());
       }
     }
 
