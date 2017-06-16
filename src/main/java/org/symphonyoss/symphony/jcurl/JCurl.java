@@ -1502,7 +1502,7 @@ public class JCurl {
   }
 
   private void processResponseTags(Response response) throws IOException {
-    if (response.output != null && contentType.equals("application/json")) {
+    if (response.output != null && response.contentType.equals("application/json")) {
       JsonNode jsonNode = MAPPER.readTree(response.output);
 
       for (Map.Entry<String, String> entry : tagMap.entrySet()) {
