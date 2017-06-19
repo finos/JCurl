@@ -450,7 +450,7 @@ public class JCurl {
      * @return
      */
     public Builder connectTimeout(int milliseconds) {
-      instance.connectTimeout = milliseconds * 1000;
+      instance.connectTimeout = milliseconds;
       return this;
     }
 
@@ -460,7 +460,7 @@ public class JCurl {
      * @return
      */
     public Builder readTimeout(int milliseconds) {
-      instance.readTimeout = milliseconds * 1000;
+      instance.readTimeout = milliseconds;
       return this;
     }
 
@@ -976,7 +976,8 @@ public class JCurl {
     private Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private Map<String, String> tagMap = new HashMap<>();
     private List<String> tagList = new ArrayList<>();
-
+    private JsonNode jsonNode;
+    
     /**
      * Print response data and optional meta information. Unless a different configuration is specified with
      * JCurl.Builder, only prints response data. Response is interpreted as application/json by default; this
@@ -1262,12 +1263,51 @@ public class JCurl {
     }
 
     /**
+     * Return a copy of the map of all tags captured as a result
+     * of a call to {@link Builder.extract(String,String)}
+     * 
+     * @return a copy of the map of named tags.
+     */
+    public Map<String, String> getTagMap()
+    {
+      return new HashMap<>(tagMap);
+    }
+
+    /**
+     * Return a copy of the list of all tags captured as a result
+     * of a call to {@link Builder.extract(String)}
+     * 
+     * @return a copy of the list of indexed tags.
+     */
+    public List<String> getTagList()
+    {
+      return new ArrayList<>(tagList);
+    }
+
+    /**
      *
      * @param index
      * @return
      */
     public String getTag(int index) {
       return tagList.get(index);
+    }
+
+    /**
+     * Return the content type of the response.
+     * 
+     * @return The MIME type of the response.
+     */
+    public String getContentType() {
+        return contentType;
+    }
+
+    /**
+     * Return the parsed JSON response, if any.
+     * @return A JsonNode representing the response or null.
+     */
+    public JsonNode getJsonNode() {
+        return jsonNode;
     }
 
   }
@@ -1503,12 +1543,12 @@ public class JCurl {
 
   private void processResponseTags(Response response) throws IOException {
     if (response.output != null && response.contentType.equals("application/json")) {
-      JsonNode jsonNode = MAPPER.readTree(response.output);
+      response.jsonNode = MAPPER.readTree(response.output);
 
       for (Map.Entry<String, String> entry : tagMap.entrySet()) {
         String name = entry.getKey();
         String tag = entry.getValue();
-        JsonNode value = jsonNode;
+        JsonNode value = response.jsonNode;
 
         for (String part : tag.split("\\.")) {
           value = value.get(part);
@@ -1519,7 +1559,7 @@ public class JCurl {
         response.tagMap.put(name, (value != null) ? value.asText() : null);
       }
 
-      for (JsonNode childNode : jsonNode) {
+      for (JsonNode childNode : response.jsonNode) {
         for (String tag : tagList) {
           JsonNode value = childNode;
 
