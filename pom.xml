@@ -60,7 +60,7 @@
             <organization>Symphony Communication Services LLC</organization>
             <organizationUrl>http://symphony.com</organizationUrl>
             <roles>
-                <role>Senior Director Platform</role>
+                <role>Senior Developer Platform</role>
             </roles>
         </developer>
         <developer>
@@ -144,6 +144,17 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>disable-java8-doclint</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
