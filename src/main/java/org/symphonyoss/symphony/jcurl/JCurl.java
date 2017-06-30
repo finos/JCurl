@@ -18,7 +18,6 @@ package org.symphonyoss.symphony.jcurl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import sun.security.tools.KeyStoreUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
