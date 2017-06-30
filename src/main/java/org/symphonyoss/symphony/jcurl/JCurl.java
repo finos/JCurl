@@ -18,6 +18,7 @@ package org.symphonyoss.symphony.jcurl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import sun.security.tools.KeyStoreUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -503,7 +504,8 @@ public class JCurl {
         if (instance.keyStore != null) {
           try (InputStream fis = new FileInputStream(instance.keyStore)) {
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            KeyStore ks = KeyStore.getInstance("JKS");
+            String ksType = (instance.storeType != null) ? instance.storeType : "pkcs12";
+            KeyStore ks = KeyStore.getInstance(ksType);
 
             ks.load(fis, instance.storePass.toCharArray());
             kmf.init(ks, instance.storePass.toCharArray());
@@ -518,7 +520,8 @@ public class JCurl {
         } else if (instance.trustStore != null) {
           try (InputStream fis = new FileInputStream(instance.trustStore)) {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            KeyStore ts = KeyStore.getInstance("JKS");
+            String tsType = (instance.trustType != null) ? instance.trustType : KeyStore.getDefaultType();
+            KeyStore ts = KeyStore.getInstance(tsType);
 
             ts.load(fis, instance.trustPass.toCharArray());
             tmf.init(ts);
