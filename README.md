@@ -117,7 +117,7 @@ java -jar jcurl.jar -H sessionToken $skey -H Content-Type application/json -v -d
 # Response: {"format":"TEXT","message":"Member added"}
  
 # Send a test message
-eval `java -jar jcurl.jar -t mid id -H sessionToken $skey -H keyManagerToken $kmkey -H Content-Type application/json -v -data '{"message":"Hello world!", "format":"TEXT"}' https://localhost.symphony.com:8446/agent/v2/stream/$sid/message/create`
+java -jar jcurl.jar -H sessionToken $skey -H keyManagerToken $kmkey -H Content-Type application/json -v -data '{"message":"Hello world!", "format":"TEXT"}' https://localhost.symphony.com:8446/agent/v2/stream/$sid/message/create
 # Response: {"id":"61YWWE7UReiUoW6HRtWMQH___qdCqJYadA","timestamp":"1480645372422","v2messageType":"V2Message","streamId":"bDF-x322YHs_QuLhGBUjtn___qdCqKffdA","attachments":[],"fromUserId":68719476743,"message":"Hello world!"}
 ```
 
