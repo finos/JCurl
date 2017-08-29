@@ -1516,10 +1516,15 @@ public class JCurl {
 
   private void processResponseCertificates(HttpURLConnection con, Response response) throws SSLPeerUnverifiedException {
     if (con instanceof HttpsURLConnection) {
-      HttpsURLConnection secureConn = (HttpsURLConnection) con;
-      response.cipherSuite = secureConn.getCipherSuite();
-      response.serverCertificates = secureConn.getServerCertificates();
-      response.clientCertificates = secureConn.getLocalCertificates();
+      try {
+        HttpsURLConnection secureConn = (HttpsURLConnection) con;
+        response.cipherSuite = secureConn.getCipherSuite();
+        response.serverCertificates = secureConn.getServerCertificates();
+        response.clientCertificates = secureConn.getLocalCertificates();
+      } catch (IllegalStateException e) {
+        // If the response is not a 200, getting response certificates will fail with the (misleading) message
+        // "connection not yet open". Ignore this.
+      }
     }
   }
 
@@ -1544,7 +1549,7 @@ public class JCurl {
   }
 
   private void processResponseTags(Response response) throws IOException {
-    if (response.output != null && response.contentType.equals("application/json")) {
+    if (response.output != null && "application/json".equals(response.contentType)) {
       response.jsonNode = MAPPER.readTree(response.output);
 
       for (Map.Entry<String, String> entry : tagMap.entrySet()) {
