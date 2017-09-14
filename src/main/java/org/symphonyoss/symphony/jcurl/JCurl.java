@@ -135,6 +135,7 @@ public class JCurl {
   private int verbosity;
   private int connectTimeout;
   private int readTimeout;
+  private boolean trustAllHostnames;
   private boolean trustAllCerts;
   private boolean extractCookies;
   private List<String> tagList = new ArrayList<>();
@@ -148,8 +149,6 @@ public class JCurl {
 
   static final ObjectMapper MAPPER = new ObjectMapper();
   static final HostnameVerifier DEFAULT_HOSTNAME_VERIFIER = HttpsURLConnection.getDefaultHostnameVerifier();
-//  static final SSLSocketFactory DEFAULT_SSL_SOCKET_FACTORY = HttpsURLConnection.getDefaultSSLSocketFactory();
-
 
   public enum HttpMethod {
     GET, POST
@@ -428,6 +427,7 @@ public class JCurl {
      * @return
      */
     public Builder trustAllHostnames(boolean disableChecks) {
+      instance.trustAllHostnames = disableChecks;
       if (disableChecks) {
         HttpsURLConnection.setDefaultHostnameVerifier(new AllValidatingHostnameVerifier());
       }
@@ -464,6 +464,15 @@ public class JCurl {
       return this;
     }
 
+    /**
+     * The URL to connect to.
+     * @param url
+     * @return
+     */
+    public Builder url(String url) {
+      instance.url = url;
+      return this;
+    }
 
     /**
      * Get an instance of JCurl with options configured by the {@link #Builder()}.
@@ -494,7 +503,7 @@ public class JCurl {
 
       return instance;
     }
-
+    
     private void initSSLContext() {
       try {
         KeyManager[] keyManagers = null;
@@ -976,6 +985,7 @@ public class JCurl {
     private Certificate[] serverCertificates;
     private Certificate[] clientCertificates;
     private Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    private Map<String, String> cookies = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private Map<String, String> tagMap = new HashMap<>();
     private List<String> tagList = new ArrayList<>();
     private JsonNode jsonNode;
@@ -986,9 +996,6 @@ public class JCurl {
      * can be changed with -H Content-Type your/mimetype.
      */
     public void print() throws CertificateParsingException, IOException {
-      if (verbosity >= 1) {
-        printRequestDetails();
-      }
 
       if (verbosity >= 2) {
         printCertificateDetails();
@@ -1016,37 +1023,6 @@ public class JCurl {
           System.err.println(output);
         }
       }
-    }
-
-    private void printRequestDetails() {
-      StringBuilder out = new StringBuilder("jcurl ");
-
-      out.append("-H ")
-          .append("Content-Type ")
-          .append(JCurl.this.contentType)
-          .append(" ");
-
-      for (Map.Entry<String, String> header : headerMap.entrySet()) {
-        out.append("-H ")
-            .append(header.getKey())
-            .append(" ")
-            .append(header.getValue())
-            .append(" ");
-      }
-
-      if (method.equals(HttpMethod.POST)) {
-        if (data != null) {
-          out.append("-data ")
-              .append(data)
-              .append(" ");
-        } else {
-          out.append("-post");
-        }
-      }
-
-      out.append(" ")
-          .append(url);
-      System.out.println(out.toString());
     }
 
     private void printCertificateDetails() throws CertificateParsingException {
@@ -1191,12 +1167,9 @@ public class JCurl {
     }
 
     private void printCookies() throws IOException {
-      if (headers != null) {
-        for (String cookie : headers.get("Set-Cookie")) {
-          String[] cookieValues = cookie.split(";");
-          System.out.println(cookieValues[0]);
+        for (Map.Entry<String, String> cookie : cookies.entrySet()) {
+          System.out.println(cookie.getKey() + "=" + cookie.getValue());
         }
-      }
     }
 
     /**
@@ -1245,6 +1218,30 @@ public class JCurl {
      */
     public Map<String, List<String>> getHeaders() {
       return headers;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public List<String> getHeader(String name) {
+      return headers.get(name);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Map<String, String> getCookies() {
+      return cookies;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getCookie(String name) {
+      return cookies.get(name);
     }
 
     /**
@@ -1349,6 +1346,24 @@ public class JCurl {
   /**
    * Perform a HTTP(s) request to the provided URL. Unless a different configuration is specified with JCurl.Builder,
    * performs a GET request with Content-Type: application/json, expecting a HTTP 200 response.
+   * This method requires the URL to have been set with {@link JCurl.Builder.url()}.
+   *
+   * @return a {@link java.net.HttpURLConnection} object.
+   * @throws java.io.IOException if any.
+   */
+  public HttpURLConnection connect() throws IOException {
+    if (url == null || "".equals(url.trim())) {
+      System.err.println("A URL is required");
+      System.err.println("Try 'jcurl -h' or 'jcurl -help' for more information.");
+      System.exit(1);
+    }
+
+    return connect(url);
+  }
+
+  /**
+   * Perform a HTTP(s) request to the provided URL. Unless a different configuration is specified with JCurl.Builder,
+   * performs a GET request with Content-Type: application/json, expecting a HTTP 200 response.
    *
    * @param url a {@link java.net.URL} object.
    * @return a {@link java.net.HttpURLConnection} object.
@@ -1403,7 +1418,7 @@ public class JCurl {
     }
 
     if (verbosity >= 1) {
-      //TODO: print request parameters
+      System.err.println(this.toString());
 
       for (Map.Entry<String, List<String>> entry : con.getRequestProperties().entrySet()) {
         for (String v : entry.getValue()) {
@@ -1487,6 +1502,101 @@ public class JCurl {
     return response;
   }
 
+  @Override
+  public String toString() {
+    StringBuilder output = new StringBuilder();
+
+    output.append("java -jar jcurl.jar ");
+
+    if (keyStore != null) {
+      output.append(String.format("-keystore %s ", keyStore));
+    }
+
+    if (storePass != null) {
+      output.append(String.format("-storepass %s ", storePass));
+    }
+
+    if (storeType != null) {
+      output.append(String.format("-storetype %s ", storeType));
+    }
+
+    if (trustStore != null) {
+      output.append(String.format("-truststore %s ", trustStore));
+    }
+
+    if (trustPass != null) {
+      output.append(String.format("-trustpass %s ", trustPass));
+    }
+
+    if (trustType != null) {
+      output.append(String.format("-trusttype %s ", trustType));
+    }
+
+    for (Map.Entry<String, String> header : headerMap.entrySet()) {
+      output.append(String.format("-H %s %s ", header.getKey(), header.getValue()));
+    }
+
+    for (Map.Entry<String, String> cookie : cookieMap.entrySet()) {
+      output.append(String.format("-b %s %s ", cookie.getKey(), cookie.getValue()));
+    }
+
+    for (Map.Entry<String, String> formParam : formMap.entrySet()) {
+      output.append(String.format("-F %s %s ", formParam.getKey(), formParam.getValue()));
+    }
+
+    for (Map.Entry<String, String> tag : tagMap.entrySet()) {
+      output.append(String.format("-t %s %s ", tag.getKey(), tag.getValue()));
+    }
+
+    for (String tag : tagList) {
+      output.append(String.format("-a %s ", tag));
+    }
+
+    if (extractCookies) {
+      output.append("-c ");
+    }
+
+    for (Integer status : expectedResponseSet) {
+      if (status != 200) {
+        output.append(String.format("-http %s ", status));
+      }
+    }
+
+    if (httpProxyHost != null) {
+      output.append(String.format("-x %s:%s ", httpProxyHost, httpProxyPort));
+    }
+
+    if (httpsProxyHost != null) {
+      output.append(String.format("-x %s:%s ", httpsProxyHost, httpsProxyPort));
+    }
+
+    if (nonProxyHosts != null) {
+      output.append(String.format("-noproxy %s ", nonProxyHosts));
+    }
+
+    if (trustAllHostnames) {
+      output.append("-no-verify-hostname ");
+    }
+
+    if (trustAllCerts) {
+      output.append("-no-check-certificate ");
+    }
+
+    if (verbosity > 0) {
+      output.append(String.format("-%0" + verbosity + "d ", 0).replace("0", "v"));
+    }
+
+    if (data != null) {
+      output.append(String.format("-data %s ", data));
+    } else if (method == HttpMethod.POST) {
+      output.append("-post ");
+    }
+
+    output.append(url);
+
+    return output.toString();
+  }
+
   private void processResponseHeaders(HttpURLConnection con, Response response) throws IOException {
     for (Map.Entry<String, List<String>> header : con.getHeaderFields().entrySet()) {
       String headerName = header.getKey();
@@ -1498,6 +1608,18 @@ public class JCurl {
           String contentType = headerValue.get(0);
           if (contentType != null) {
             response.contentType = contentType.split(";")[0];
+          }
+        } else if ("Set-Cookie".equalsIgnoreCase(headerName)) {
+          for (String cookie : headerValue) {
+            String[] cookieValues = cookie.split(";\\s*");
+
+            if (cookieValues.length > 0) {
+              String[] cookieKV = cookieValues[0].split("=");
+
+              if (cookieKV.length == 2) {
+                response.cookies.put(cookieKV[0], cookieKV[1]);
+              }
+            }
           }
         } else {
           response.headers.put(headerName, headerValue);
