@@ -10,7 +10,7 @@
 
     <groupId>org.symphonyoss.symphony</groupId>
     <artifactId>jcurl</artifactId>
-    <version>0.9.8-SNAPSHOT</version>
+    <version>0.9.8</version>
     <name>JCurl</name>
     <url>https://github.com/symphonyoss/jcurl</url>
     <description>JSON-aware curl(1) in Java</description>
@@ -48,7 +48,7 @@
         <connection>scm:git:git://github.com/symphonyoss/jcurl.git</connection>
         <developerConnection>scm:git:git@github.com:symphonyoss/jcurl.git</developerConnection>
         <url>https://github.com/symphonyoss/jcurl</url>
-        <tag>jcurl-0.9.6</tag>
+        <tag>jcurl-0.9.8</tag>
     </scm>
 
     <developers>
