@@ -112,6 +112,7 @@
     </properties>
 
     <build>
+        <finalName>jcurl</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

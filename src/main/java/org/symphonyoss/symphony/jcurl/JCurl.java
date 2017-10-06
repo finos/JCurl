@@ -1671,8 +1671,7 @@ public class JCurl {
   }
 
   private void processResponseTags(Response response) throws IOException {
-    if (response.output != null && "application/json".equals(response.contentType)
-        && (!this.tagList.isEmpty() || !this.tagMap.isEmpty())) {
+    if (response.output != null && "application/json".equals(response.contentType)) {
       response.jsonNode = MAPPER.readTree(response.output);
 
       for (Map.Entry<String, String> entry : tagMap.entrySet()) {
