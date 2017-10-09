@@ -1126,7 +1126,7 @@ public class JCurl {
     }
 
     private void printResponseJson() throws IOException {
-      JsonNode jsonNode = MAPPER.readTree(output);
+      JsonNode jsonNode = getJsonNode();
 
       if (!tagMap.isEmpty()) {
         printTagMap();
@@ -1305,8 +1305,11 @@ public class JCurl {
      * Return the parsed JSON response, if any.
      * @return A JsonNode representing the response or null.
      */
-    public JsonNode getJsonNode() {
-        return jsonNode;
+    public JsonNode getJsonNode() throws IOException {
+      if (jsonNode == null) {
+        jsonNode = MAPPER.readTree(output);
+      }
+      return jsonNode;
     }
 
   }
@@ -1672,12 +1675,11 @@ public class JCurl {
 
   private void processResponseTags(Response response) throws IOException {
     if (response.output != null && "application/json".equals(response.contentType)) {
-      response.jsonNode = MAPPER.readTree(response.output);
 
       for (Map.Entry<String, String> entry : tagMap.entrySet()) {
         String name = entry.getKey();
         String tag = entry.getValue();
-        JsonNode value = response.jsonNode;
+        JsonNode value = response.getJsonNode();
 
         for (String part : tag.split("\\.")) {
           value = value.get(part);
@@ -1688,7 +1690,7 @@ public class JCurl {
         response.tagMap.put(name, (value != null) ? value.asText() : null);
       }
 
-      for (JsonNode childNode : response.jsonNode) {
+      for (JsonNode childNode : response.getJsonNode()) {
         for (String tag : tagList) {
           JsonNode value = childNode;
 
