@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -133,6 +134,8 @@ public class JCurl {
   private String httpsProxyPort;
   private String nonProxyHosts;
   private int verbosity;
+  private PrintStream outStream = System.out ;
+  private PrintStream errStream = System.err ;
   private int connectTimeout;
   private int readTimeout;
   private boolean trustAllHostnames;
@@ -315,7 +318,27 @@ public class JCurl {
       instance.verbosity = level;
       return this;
     }
-
+	
+	/**
+	 * Redirect standard output to the given stream
+	 * @param stream
+	 * @return 
+	 */
+	public Builder output(PrintStream stream){
+		instance.outStream = stream ;
+		return this ;
+	}
+	
+	/**
+	 * Redirect error output to the given stream
+	 * @param stream
+	 * @return 
+	 */
+	public Builder error(PrintStream stream){
+		instance.errStream = stream ;
+		return this ;
+	}
+	
     /**
      * The keystore containing the certificate to use for authentication.
      * @param store
@@ -519,7 +542,7 @@ public class JCurl {
             kmf.init(ks, instance.storePass.toCharArray());
             keyManagers = kmf.getKeyManagers();
           } catch (IOException | CertificateException | KeyStoreException | UnrecoverableKeyException e) {
-            System.err.println("Failed to initialize keystore: " + e.getMessage());
+            instance.errStream.println("Failed to initialize keystore: " + e.getMessage());
           }
         }
 
@@ -535,7 +558,7 @@ public class JCurl {
             tmf.init(ts);
             trustManagers = tmf.getTrustManagers();
           } catch (IOException | CertificateException | KeyStoreException e) {
-            System.err.println("Failed to initialize truststore: " + e.getMessage());
+            instance.errStream.println("Failed to initialize truststore: " + e.getMessage());
           }
         }
 
@@ -544,7 +567,7 @@ public class JCurl {
         SSLContext.setDefault(context);
         HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
       } catch (NoSuchAlgorithmException | KeyManagementException e) {
-        System.err.println("Failed to initialize SSL context: " + e.getMessage());
+        instance.errStream.println("Failed to initialize SSL context: " + e.getMessage());
       }
     }
 
@@ -569,7 +592,7 @@ public class JCurl {
     private String url;
 
     private JCurl parseCommandLine(String[] args) throws MalformedURLException, NoSuchAlgorithmException,
-        KeyManagementException {
+        KeyManagementException, FileNotFoundException {
       this.argv = args;
       Builder builder = builder();
 
@@ -703,6 +726,16 @@ public class JCurl {
           case "-no-check-certificate":
             builder.trustAllCertificates(true);
             break;
+		
+		  case "-out":
+			String outputFile = getNextArg();
+			builder.output(new PrintStream(new File(outputFile)));
+			break ;
+			
+		  case "-err":
+			String errOutputFile = getNextArg();
+			builder.error(new PrintStream(new File(errOutputFile)));
+			break ;	
 
           case "-h":
           case "-help":
@@ -989,7 +1022,7 @@ public class JCurl {
     private Map<String, String> tagMap = new HashMap<>();
     private List<String> tagList = new ArrayList<>();
     private JsonNode jsonNode;
-    
+
     /**
      * Print response data and optional meta information. Unless a different configuration is specified with
      * JCurl.Builder, only prints response data. Response is interpreted as application/json by default; this
@@ -1002,9 +1035,9 @@ public class JCurl {
       }
 
       if (verbosity >= 1) {
-        System.err.println("* Time taken: " + timeTaken / 1000000 + " ms");
+        errStream.println("* Time taken: " + timeTaken / 1000000 + " ms");
         printResponseDetails();
-        System.err.println("<");
+        errStream.println("<");
       }
 
       if (verbosity >= 1 || output != null) {
@@ -1012,7 +1045,7 @@ public class JCurl {
       }
 
       if (!expectedResponseSet.contains(responseCode)) {
-        System.out.println("httpStatus=" + responseCode);
+        outStream.println("httpStatus=" + responseCode);
         System.exit(1);
       }
 
@@ -1020,7 +1053,7 @@ public class JCurl {
         if ("application/json".equalsIgnoreCase(contentType)) {
           printResponseJson();
         } else {
-          System.err.println(output);
+          errStream.println(output);
         }
       }
     }
@@ -1028,56 +1061,56 @@ public class JCurl {
     private void printCertificateDetails() throws CertificateParsingException {
 
       try {
-        System.err.println("* Cipher Suite       : " + cipherSuite);
+        errStream.println("* Cipher Suite       : " + cipherSuite);
 
         for (Certificate cert : serverCertificates) {
-          System.err.println("* Cert Type          : " + cert.getType());
+          errStream.println("* Cert Type          : " + cert.getType());
 
           if (cert instanceof X509Certificate) {
             X509Certificate x509Cert = (X509Certificate) cert;
 
             //                  *      Type          : "
-            System.err.println("*      Issuer        : " + x509Cert.getIssuerDN());
-            System.err.println("*      Subject       : " + x509Cert.getSubjectDN());
+            errStream.println("*      Issuer        : " + x509Cert.getIssuerDN());
+            errStream.println("*      Subject       : " + x509Cert.getSubjectDN());
 
             //                  *      Type      : "
-            System.err.println("*      Issuer ID     : " + x509Cert.getIssuerUniqueID());
-            System.err.println("*      Sig Algorithm : " + x509Cert.getSigAlgName());
-            System.err.println("*      Basic Const   : " + x509Cert.getBasicConstraints());
-            System.err.println("*      Ext Key Usage : " + x509Cert.getExtendedKeyUsage());
-            System.err.println("*      Not Before    : " + x509Cert.getNotBefore());
-            System.err.println("*      Not After     : " + x509Cert.getNotAfter());
-            System.err.println("*      Subject ID    : " + x509Cert.getSubjectUniqueID());
+            errStream.println("*      Issuer ID     : " + x509Cert.getIssuerUniqueID());
+            errStream.println("*      Sig Algorithm : " + x509Cert.getSigAlgName());
+            errStream.println("*      Basic Const   : " + x509Cert.getBasicConstraints());
+            errStream.println("*      Ext Key Usage : " + x509Cert.getExtendedKeyUsage());
+            errStream.println("*      Not Before    : " + x509Cert.getNotBefore());
+            errStream.println("*      Not After     : " + x509Cert.getNotAfter());
+            errStream.println("*      Subject ID    : " + x509Cert.getSubjectUniqueID());
 
             Collection<List<?>> altNames = x509Cert.getSubjectAlternativeNames();
 
             if (altNames != null) {
               for (List<?> nameList : altNames) {
                 for (Object name : nameList) {
-                  System.err.println("*      Alt Name     : " + name);
+                  errStream.println("*      Alt Name     : " + name);
                 }
               }
             }
           }
 
-          System.err.println("*      Hash Code     : " + cert.hashCode());
-          System.err.println("*      PubKey Algo   : " + cert.getPublicKey().getAlgorithm());
-          System.err.println("*      PubKey Format : " + cert.getPublicKey().getFormat());
-          System.err.println("\n");
+          errStream.println("*      Hash Code     : " + cert.hashCode());
+          errStream.println("*      PubKey Algo   : " + cert.getPublicKey().getAlgorithm());
+          errStream.println("*      PubKey Format : " + cert.getPublicKey().getFormat());
+          errStream.println("\n");
         }
       } catch (IllegalStateException ignored) {}
     }
 
     private void printResponseDetails() throws CertificateParsingException {
 
-      System.err.println("* HTTP Response: " + responseCode);
+      errStream.println("* HTTP Response: " + responseCode);
 
       for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
         for (String v : entry.getValue()) {
           if (entry.getKey() == null) {
-            System.err.println("< " + v);
+            errStream.println("< " + v);
           } else {
-            System.err.println("< " + entry.getKey() + " : " + v);
+            errStream.println("< " + entry.getKey() + " : " + v);
           }
         }
       }
@@ -1091,36 +1124,36 @@ public class JCurl {
         while ((c = reader.read()) != -1) {
           if (verbosity >= 1) {
             if (newline) {
-              System.err.print("< ");
+              outStream.print("< ");
               newline = false;
             }
 
             switch (c) {
               case '\n':
                 newline = true;
-                System.err.println();
+                errStream.println();
                 break;
 
               case '\r':
-                System.err.print("\\r");
+                errStream.print("\\r");
                 break;
 
               case '\t':
-                System.err.print("\\t");
+                errStream.print("\\t");
                 break;
 
               case '\b':
-                System.err.print("\\b");
+                errStream.print("\\b");
                 break;
 
               default:
-                System.err.write(c);
+                errStream.write(c);
             }
           }
 
         }
-        System.err.println();
-        System.err.flush();
+        errStream.println();
+        errStream.flush();
 
       }
     }
@@ -1137,7 +1170,7 @@ public class JCurl {
       }
 
       if (tagList.isEmpty() && tagMap.isEmpty()) {
-        System.out.println(jsonNode.toString());
+        outStream.println(jsonNode.toString());
       }
 
       if (extractCookies) {
@@ -1150,25 +1183,25 @@ public class JCurl {
         String name = entry.getKey();
         String value = entry.getValue();
 
-        System.out.print(" " + name + "=\"");
-        if (value == null) { System.out.print("null"); } else {
-          System.out.print(value.replaceAll("\"", "\\\\\""));
+        outStream.print(" " + name + "=\"");
+        if (value == null) { outStream.print("null"); } else {
+          outStream.print(value.replaceAll("\"", "\\\\\""));
         }
-        System.out.println("\"");
+        outStream.println("\"");
       }
-      System.out.println();
+      outStream.println();
     }
 
 
     private void printTagList() {
       for (String tag : tagList) {
-        System.out.print(tag + " ");
+        outStream.print(tag + " ");
       }
     }
 
     private void printCookies() throws IOException {
         for (Map.Entry<String, String> cookie : cookies.entrySet()) {
-          System.out.println(cookie.getKey() + "=" + cookie.getValue());
+          outStream.println(cookie.getKey() + "=" + cookie.getValue());
         }
     }
 
@@ -1356,8 +1389,8 @@ public class JCurl {
    */
   public HttpURLConnection connect() throws IOException {
     if (url == null || "".equals(url.trim())) {
-      System.err.println("A URL is required");
-      System.err.println("Try 'jcurl -h' or 'jcurl -help' for more information.");
+      errStream.println("A URL is required");
+      errStream.println("Try 'jcurl -h' or 'jcurl -help' for more information.");
       System.exit(1);
     }
 
@@ -1389,7 +1422,7 @@ public class JCurl {
     URLConnection rawCon = new URL(urlString).openConnection();
 
     if (!(rawCon instanceof HttpURLConnection)) {
-      System.err.println("Only http(s) is supported. Connection is of type " + rawCon.getClass());
+      errStream.println("Only http(s) is supported. Connection is of type " + rawCon.getClass());
       System.exit(1);
     }
 
@@ -1421,18 +1454,18 @@ public class JCurl {
     }
 
     if (verbosity >= 1) {
-      System.err.println(this.toString());
+      errStream.println(this.toString());
 
       for (Map.Entry<String, List<String>> entry : con.getRequestProperties().entrySet()) {
         for (String v : entry.getValue()) {
           if (entry.getKey() == null) {
-            System.err.println("> " + v);
+            errStream.println("> " + v);
           } else {
-            System.err.println("> " + entry.getKey() + ": " + v);
+            errStream.println("> " + entry.getKey() + ": " + v);
           }
         }
       }
-      System.err.println(">");
+      errStream.println(">");
     }
 
     switch (method) {
@@ -1446,8 +1479,8 @@ public class JCurl {
           wr.writeBytes(data);
 
           if (verbosity >= 1) {
-            System.err.print("> ");
-            System.err.println(data);
+            errStream.print("> ");
+            errStream.println(data);
           }
 
           wr.flush();
@@ -1709,4 +1742,4 @@ public class JCurl {
     }
   }
 
-}
+  }
