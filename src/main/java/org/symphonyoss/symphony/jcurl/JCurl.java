@@ -319,26 +319,28 @@ public class JCurl {
       return this;
     }
 	
-	/**
-	 * Redirect standard output to the given stream
-	 * @param stream
-	 * @return 
-	 */
-	public Builder output(PrintStream stream){
-		instance.outStream = stream ;
-		return this ;
-	}
-	
-	/**
-	 * Redirect error output to the given stream
-	 * @param stream
-	 * @return 
-	 */
-	public Builder error(PrintStream stream){
-		instance.errStream = stream ;
-		return this ;
-	}
-	
+    /**
+     * Redirect standard output to the given stream
+     *
+     * @param stream
+     * @return
+     */
+    public Builder output(PrintStream stream) {
+      instance.outStream = stream;
+      return this;
+    }
+
+    /**
+     * Redirect error output to the given stream
+     *
+     * @param stream
+     * @return
+     */
+    public Builder error(PrintStream stream) {
+      instance.errStream = stream;
+      return this;
+    }
+
     /**
      * The keystore containing the certificate to use for authentication.
      * @param store
@@ -726,16 +728,16 @@ public class JCurl {
           case "-no-check-certificate":
             builder.trustAllCertificates(true);
             break;
-		
-		  case "-out":
-			String outputFile = getNextArg();
-			builder.output(new PrintStream(new File(outputFile)));
-			break ;
-			
-		  case "-err":
-			String errOutputFile = getNextArg();
-			builder.error(new PrintStream(new File(errOutputFile)));
-			break ;	
+
+          case "-out":
+            String outputFile = getNextArg();
+            builder.output(new PrintStream(new File(outputFile)));
+            break;
+
+          case "-err":
+            String errOutputFile = getNextArg();
+            builder.error(new PrintStream(new File(errOutputFile)));
+            break;
 
           case "-h":
           case "-help":
