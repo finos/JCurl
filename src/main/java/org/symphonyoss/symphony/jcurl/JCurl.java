@@ -145,6 +145,7 @@ public class JCurl {
   private Map<String, String> tagMap = new HashMap<>();
   private Map<String, String> formMap = new HashMap<>();
   private Map<String, String> headerMap = new HashMap<>();
+  private Map<String, String> queryMap = new HashMap<>();
   private Map<String, String> cookieMap = new HashMap<>();
   private Set<Integer> expectedResponseSet = new HashSet<>();
   private HttpMethod method = HttpMethod.GET;
@@ -154,7 +155,7 @@ public class JCurl {
   static final HostnameVerifier DEFAULT_HOSTNAME_VERIFIER = HttpsURLConnection.getDefaultHostnameVerifier();
 
   public enum HttpMethod {
-    GET, POST
+    GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS
   }
 
   /**
@@ -249,8 +250,18 @@ public class JCurl {
     }
 
     /**
+     * Set request query parameters to be appended to the target URL as "name=value" pairs separated by "&";
+     * @param name
+     * @param value
+     * @return
+     */
+    public Builder query(String name, String value) {
+      instance.queryMap.put(name, value);
+      return this;
+    }
+
+    /**
      * Send a custom cookie with the request. <br>
-     * Example: {@link #header(String, String) header("JSESSIONID", "abcd1234")}
      * @param name
      * @param value
      * @return
@@ -612,6 +623,7 @@ public class JCurl {
             String config = getNextArg();
             return parseConfig(config);
 
+          case "-d":
           case "-data":
             String payload = getNextArg();
             builder.data(payload);
@@ -652,6 +664,19 @@ public class JCurl {
             String formName = getNextArg();
             String formValue = getNextArg();
             builder.form(formName, formValue);
+            break;
+
+          case "-q":
+          case "-query":
+            String paramName = getNextArg();
+            String paramValue = getNextArg();
+            builder.query(paramName, paramValue);
+            break;
+
+          case "-X":
+          case "-request":
+            String method = getNextArg().toUpperCase();
+            builder.method(HttpMethod.valueOf(method));
             break;
 
           case "-post":
@@ -922,23 +947,27 @@ public class JCurl {
       printOption("-no-check-certificate", "Disable SSL certificate verification.");
 
       System.out.format("%nRequest options:%n");
-      printOption("-H KEY VALUE",
+      printOption("-H, -header KEY VALUE",
           "Send a custom header with the request. Example: -H Content-Type application/json.");
-      printOption("-post",
-          "Send a POST request without request body. If neither -post nor -data is specified, sends"
-              + " a GET request.");
-      printOption("-data DATA",
+      printOption("-d, -data DATA",
           "Send a POST request with DATA as request body. Example: -data '{\"message\": \"Hello "
               + "world!\", \"format\": \"TEXT\"}'.");
+      printOption("-q, -query KEY VALUE",
+          "Set request query parameters as \"KEY=VALUE\" paris separated by \"&\". Can be specified multiple times.");
       printOption("-F, -form KEY VALUE",
           "Send a POST request with data as \"KEY=VALUE\" pairs corresponding to a HTML form. "
               + "To specify a file, precede the file name with \"@\" (example: -F "
               + "file @/my/test/file.txt). Can be specified multiple times. Sets 'Content-Type: multipart/form-data'.");
+      printOption("-b, -cookie KEY VALUE",
+          "Set cookies used by the request. Can be specified multiple times.");
       printOption("-c, -extract-cookies",
           "Extract cookies returned by the call and return as \"NAME=VALUE\". "
               + "If multiple cookies are returned, each is output on a new line.");
-      printOption("-b, -cookie KEY VALUE",
-          "Set cookies used by the request. Can be specified multiple times.");
+      printOption("-post",
+          "Send a POST request without request body. If neither -post nor -data is specified, sends"
+              + " a GET request.");
+      printOption("-X, -request METHOD",
+          "Set the HTTP METHOD for the request. Supported values: GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS.");
       printOption("-http STATUS",
           "Add HTTP STATUS as an expected response code. By default only HTTP 200 is expected as "
               + "correct status.");
@@ -1421,7 +1450,9 @@ public class JCurl {
   public HttpURLConnection connect(String urlString) throws IOException {
     this.url = urlString;
 
-    URLConnection rawCon = new URL(urlString).openConnection();
+    String targetUrl = buildUrl();
+
+    URLConnection rawCon = new URL(targetUrl).openConnection();
 
     if (!(rawCon instanceof HttpURLConnection)) {
       errStream.println("Only http(s) is supported. Connection is of type " + rawCon.getClass());
@@ -1505,8 +1536,8 @@ public class JCurl {
           multipart.finish();
         }
         break;
-      case GET:
-        con.setRequestMethod("GET");
+      default:
+        con.setRequestMethod(method.name());
         break;
     }
 
@@ -1628,9 +1659,11 @@ public class JCurl {
       output.append(String.format("-data %s ", data));
     } else if (method == HttpMethod.POST) {
       output.append("-post ");
+    } else {
+      output.append(String.format("-X %s ", method.name()));
     }
 
-    output.append(url);
+    output.append(buildUrl());
 
     return output.toString();
   }
@@ -1744,4 +1777,28 @@ public class JCurl {
     }
   }
 
+  private String buildUrl() {
+    StringBuilder urlBuilder = new StringBuilder(url);
+
+    String[] urlParts = url.split("/");
+
+    if (urlParts[urlParts.length-1].contains("?")) {
+      urlBuilder.append("&");
+    } else {
+      urlBuilder.append("?");
+    }
+
+    Iterator<Map.Entry<String, String>> it = queryMap.entrySet().iterator();
+    while (it.hasNext()) {
+      Map.Entry<String, String> queryParam = it.next();
+      urlBuilder.append(String.format("%s=%s", queryParam.getKey(), queryParam.getValue()));
+
+      if (it.hasNext()) {
+        urlBuilder.append("&");
+      }
+    }
+
+    return urlBuilder.toString();
   }
+
+}
