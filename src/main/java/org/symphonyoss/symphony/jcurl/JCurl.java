@@ -1743,6 +1743,10 @@ public class JCurl {
   }
 
   private String buildUrl() {
+    if (queryMap == null || queryMap.isEmpty()) {
+      return url;
+    }
+
     StringBuilder urlBuilder = new StringBuilder(url);
 
     String[] urlParts = url.split("/");
