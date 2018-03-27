@@ -127,10 +127,8 @@ public class JCurl {
   private String trustStore;
   private String trustType;
   private String trustPass;
-  private String httpProxyHost;
-  private String httpProxyPort;
-  private String httpsProxyHost;
-  private String httpsProxyPort;
+  private String proxyHost;
+  private String proxyPort;
   private String nonProxyHosts;
   private int verbosity;
   private int connectTimeout;
@@ -386,7 +384,7 @@ public class JCurl {
     }
 
     /**
-     * Proxy the request through the specified URL. Can be specified separately for http and https.<br>
+     * Proxy the request through the specified URL. Applies to all protocols unless excluded with "-noproxy".<br>
      * Example: {@link #proxy(String) proxy("https://my.proxy.com:8080")}
      * @param proxy
      * @return
@@ -394,15 +392,8 @@ public class JCurl {
     public Builder proxy(String proxy) throws MalformedURLException {
       URL url = new URL(proxy);
 
-      switch (url.getProtocol()) {
-        case "http":
-          instance.httpProxyHost = url.getHost();
-          instance.httpProxyPort = String.valueOf(url.getPort());
-          break;
-        case "https":
-          instance.httpsProxyHost = url.getHost();
-          instance.httpsProxyPort = String.valueOf(url.getPort());
-      }
+      instance.proxyHost = url.getHost();
+      instance.proxyPort = String.valueOf(url.getPort());
 
       return this;
     }
@@ -498,10 +489,10 @@ public class JCurl {
       setSystemProperty("javax.net.ssl.trustStore", instance.trustStore);
       setSystemProperty("javax.net.ssl.trustStoreType", instance.trustType);
       setSystemProperty("javax.net.ssl.trustStorePassword", instance.trustPass);
-      setSystemProperty("http.proxyHost", instance.httpProxyHost);
-      setSystemProperty("http.proxyPort", instance.httpProxyPort);
-      setSystemProperty("https.proxyHost", instance.httpsProxyHost);
-      setSystemProperty("https.proxyPort", instance.httpsProxyPort);
+      setSystemProperty("http.proxyHost", instance.proxyHost);
+      setSystemProperty("http.proxyPort", instance.proxyPort);
+      setSystemProperty("https.proxyHost", instance.proxyHost);
+      setSystemProperty("https.proxyPort", instance.proxyPort);
       setSystemProperty("https.nonProxyHosts", instance.nonProxyHosts);
 
       if (instance.verbosity >= 3) {
@@ -939,7 +930,7 @@ public class JCurl {
 
       System.out.format("%nConnection options:%n");
       printOption("-x, -proxy", "Proxy the request through the specified URL. "
-          + "Can be specified separately for http and https. Example: -proxy https://my.proxy.com:8080.");
+          + "Applies to all protocols unless excluded with \"-noproxy\". Example: -proxy https://my.proxy.com:8080.");
       printOption("-noproxy", "Bypass the proxy set by -x for the specified list of |-separated hosts. "
           + "Supports wildcards. Example: -noproxy my.host.org|*.otherhost.net.");
       printOption("-connect-timeout", "How long to wait, in seconds, for a connection to the remote "
@@ -1596,12 +1587,8 @@ public class JCurl {
       }
     }
 
-    if (httpProxyHost != null) {
-      output.append(String.format("-x %s:%s ", httpProxyHost, httpProxyPort));
-    }
-
-    if (httpsProxyHost != null) {
-      output.append(String.format("-x %s:%s ", httpsProxyHost, httpsProxyPort));
+    if (proxyHost != null) {
+      output.append(String.format("-x %s:%s ", proxyHost, proxyPort));
     }
 
     if (nonProxyHosts != null) {
