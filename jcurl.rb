@@ -6,8 +6,8 @@ class Jcurl < Formula
   sha256 "b4bb73bee7a29b28e18ea7d16f8ed4d6d86222e92da8771e9ff25ac3234acd1c"
 
   def install
-  	prefix.install "jcurl.jar"
-  	(bin/"jcurl").write <<~EOS
+    prefix.install "jcurl.jar"
+    (bin/"jcurl").write <<~EOS
       #!/bin/sh
       
       java -jar #{prefix}/jcurl.jar
