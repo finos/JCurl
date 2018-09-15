@@ -10,7 +10,7 @@ class Jcurl < Formula
     (bin/"jcurl").write <<~EOS
       #!/bin/sh
       
-      java -jar #{prefix}/jcurl.jar
+      java -jar #{prefix}/jcurl.jar "$@"
     EOS
   end
 end
