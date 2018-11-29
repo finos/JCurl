@@ -1693,15 +1693,28 @@ public class JCurl {
     }
   }
 
-  private void processResponseTags(Response response) throws IOException {
-    if (response.output != null
+  private void processResponseTags(Response response)  {
+    // Only extract tags if the content type is JSON and the output is not blank
+    if (response.output != null && ! "".equals(response.output.trim())
         && "application/json".equalsIgnoreCase(this.contentType)
         && "application/json".equalsIgnoreCase(response.responseContentType)) {
+
+      JsonNode responseJson;
+      try {
+        responseJson = response.getJsonNode();
+      } catch (IOException e) {
+        // If the response JSON is malformed, stop processing
+        return;
+      }
+
+      if (responseJson == null) {
+        return;
+      }
 
       for (Map.Entry<String, String> entry : tagMap.entrySet()) {
         String name = entry.getKey();
         String tag = entry.getValue();
-        JsonNode value = response.getJsonNode();
+        JsonNode value = responseJson;
 
         for (String part : tag.split("\\.")) {
           value = value.get(part);
@@ -1712,7 +1725,7 @@ public class JCurl {
         response.tagMap.put(name, (value != null) ? value.asText() : null);
       }
 
-      for (JsonNode childNode : response.getJsonNode()) {
+      for (JsonNode childNode : responseJson) {
         for (String tag : tagList) {
           JsonNode value = childNode;
 
