@@ -1001,7 +1001,7 @@ public class JCurl {
     private long timeTaken;
     private String cipherSuite;
     private String output;
-    private String contentType;
+    private String responseContentType;
     private Certificate[] serverCertificates;
     private Certificate[] clientCertificates;
     private Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -1037,7 +1037,7 @@ public class JCurl {
       }
 
       if (output != null) {
-        if ("application/json".equalsIgnoreCase(contentType)) {
+        if ("application/json".equalsIgnoreCase(contentType) && "application/json".equalsIgnoreCase(responseContentType)) {
           printResponseJson();
         } else {
           System.err.println(output);
@@ -1317,8 +1317,8 @@ public class JCurl {
      * 
      * @return The MIME type of the response.
      */
-    public String getContentType() {
-        return contentType;
+    public String getResponseContentType() {
+        return responseContentType;
     }
 
     /**
@@ -1630,7 +1630,7 @@ public class JCurl {
         if ("Content-Type".equalsIgnoreCase(headerName)) {
           String contentType = headerValue.get(0);
           if (contentType != null) {
-            response.contentType = contentType.split(";")[0];
+            response.responseContentType = contentType.split(";")[0];
           }
         } else if ("Set-Cookie".equalsIgnoreCase(headerName)) {
           for (String cookie : headerValue) {
@@ -1694,7 +1694,9 @@ public class JCurl {
   }
 
   private void processResponseTags(Response response) throws IOException {
-    if (response.output != null && "application/json".equals(response.contentType)) {
+    if (response.output != null
+        && "application/json".equalsIgnoreCase(this.contentType)
+        && "application/json".equalsIgnoreCase(response.responseContentType)) {
 
       for (Map.Entry<String, String> entry : tagMap.entrySet()) {
         String name = entry.getKey();

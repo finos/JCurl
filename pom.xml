@@ -48,7 +48,7 @@
         <connection>scm:git:git://github.com/symphonyoss/jcurl.git</connection>
         <developerConnection>scm:git:git@github.com:symphonyoss/jcurl.git</developerConnection>
         <url>https://github.com/symphonyoss/jcurl</url>
-        <tag>jcurl-0.9.6</tag>
+        <tag>jcurl-0.9.12</tag>
     </scm>
 
     <developers>
