@@ -1317,7 +1317,7 @@ public class JCurl {
      * 
      * @return The MIME type of the response.
      */
-    public String getResponseContentType() {
+    public String getContentType() {
         return responseContentType;
     }
 
@@ -1757,6 +1757,110 @@ public class JCurl {
     }
 
     return urlBuilder.toString();
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public String getData() {
+    return data;
+  }
+
+  public String getKeyStore() {
+    return keyStore;
+  }
+
+  public String getStoreType() {
+    return storeType;
+  }
+
+  public String getStorePass() {
+    return storePass;
+  }
+
+  public String getTrustStore() {
+    return trustStore;
+  }
+
+  public String getTrustType() {
+    return trustType;
+  }
+
+  public String getTrustPass() {
+    return trustPass;
+  }
+
+  public String getProxyHost() {
+    return proxyHost;
+  }
+
+  public String getProxyPort() {
+    return proxyPort;
+  }
+
+  public String getNonProxyHosts() {
+    return nonProxyHosts;
+  }
+
+  public int getVerbosity() {
+    return verbosity;
+  }
+
+  public int getConnectTimeout() {
+    return connectTimeout;
+  }
+
+  public int getReadTimeout() {
+    return readTimeout;
+  }
+
+  public boolean isTrustAllHostnames() {
+    return trustAllHostnames;
+  }
+
+  public boolean isTrustAllCerts() {
+    return trustAllCerts;
+  }
+
+  public boolean isExtractCookies() {
+    return extractCookies;
+  }
+
+  public List<String> getTagList() {
+    return tagList;
+  }
+
+  public Map<String, String> getTagMap() {
+    return tagMap;
+  }
+
+  public Map<String, String> getFormMap() {
+    return formMap;
+  }
+
+  public Map<String, String> getHeaderMap() {
+    return headerMap;
+  }
+
+  public Map<String, String> getQueryMap() {
+    return queryMap;
+  }
+
+  public Map<String, String> getCookieMap() {
+    return cookieMap;
+  }
+
+  public Set<Integer> getExpectedResponseSet() {
+    return expectedResponseSet;
+  }
+
+  public HttpMethod getMethod() {
+    return method;
+  }
+
+  public String getContentType() {
+    return contentType;
   }
 
 }
