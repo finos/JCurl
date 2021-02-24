@@ -104,7 +104,7 @@
     </contributors>
 
     <properties>
-        <jackson.version>2.11.2</jackson.version>
+        <jackson.version>2.12.1</jackson.version>
         <junit.version>4.12</junit.version>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
@@ -133,6 +133,12 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.fasterxml.jackson</pattern>
+                                    <shadedPattern>com.shaded.fasterxml.jackson</shadedPattern>
+                                </relocation>
+                            </relocations>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.symphonyoss.symphony.jcurl.JCurl</mainClass>
