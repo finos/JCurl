@@ -1,5 +1,6 @@
 [![Licence](https://img.shields.io/badge/licence-Apache%20Licence%20%282.0%29-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/org.symphonyoss.symphony/jcurl.svg)](http://repo1.maven.org/maven2/org/symphonyoss/symphony/jcurl/)
+[![FINOS - Active](https://cdn.jsdelivr.net/gh/finos/contrib-toolbox@master/images/badge-active.svg)](https://finosfoundation.atlassian.net/wiki/display/FINOS/Active)
 
 # JCurl
 JSON-aware curl (1) in Java
