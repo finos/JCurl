@@ -1385,14 +1385,15 @@ public class JCurl {
   /**
    * A TrustManager which accepts all certificates. Disables SSL certificate verification.
    */
-  // nosemgrep: java.lang.security.audit.crypto.ssl.insecure-trust-manager.insecure-trust-manager
   static class AllTrustingTrustManager implements X509TrustManager {
 
+    // nosemgrep: java.lang.security.audit.crypto.ssl.insecure-trust-manager.insecure-trust-manager
     @Override
     public void checkClientTrusted(X509Certificate[] chain, String type) throws CertificateException {
 
     }
 
+    // nosemgrep: java.lang.security.audit.crypto.ssl.insecure-trust-manager.insecure-trust-manager
     @Override
     public void checkServerTrusted(X509Certificate[] chain, String type) throws CertificateException {
     }
