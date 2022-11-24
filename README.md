@@ -1,16 +1,15 @@
 [![Licence](https://img.shields.io/badge/licence-Apache%20Licence%20%282.0%29-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/org.symphonyoss.symphony/jcurl.svg)](http://repo1.maven.org/maven2/org/symphonyoss/symphony/jcurl/)
+[![FINOS - Active](https://cdn.jsdelivr.net/gh/finos/contrib-toolbox@master/images/badge-active.svg)](https://finosfoundation.atlassian.net/wiki/display/FINOS/Active)
 
 # JCurl
 JSON-aware curl (1) in Java
 
 ```
 Usage: jcurl [options...] <URL>
-
 Sets 'Content-Type: application/json' by default unless noted otherwise. To change the request content type, use '-H Content-Type your/mimetype'.
 
 SSL options:
-
 -keystore                  The keystore containing the certificate to use for authentication.
 -storepass                 The keystore password.
 -storetype                 The keystore type. Supported values: jks, jceks, pkcs11, pkcs12, bks, dks, windows-my.
@@ -22,24 +21,23 @@ SSL options:
 -no-check-certificate      Disable SSL certificate verification.
 
 Request options:
-
--H KEY VALUE               Send a custom header with the request. Example: -H Content-Type application/json.
--post                      Send a POST request without request body. If neither -post nor -data is specified, sends a GET request.
--data DATA                 Send a POST request with DATA as request body. Example: -data '{"message": "Hello world!", "format": "TEXT"}'.
+-H, -header KEY VALUE      Send a custom header with the request. Example: -H Content-Type application/json.
+-d, -data DATA             Send a POST request with DATA as request body. Example: -data '{"message": "Hello world!", "format": "TEXT"}'.
+-q, -query KEY VALUE       Set request query parameters as "KEY=VALUE" paris separated by "&". Can be specified multiple times.
 -F, -form KEY VALUE        Send a POST request with data as "KEY=VALUE" pairs corresponding to a HTML form. To specify a file, precede the file name with "@" (example: -F file @/my/test/file.txt). Can be specified multiple times. Sets 'Content-Type: multipart/form-data'.
--c, -extract-cookies       Extract cookies returned by the call and return as "NAME=VALUE". If multiple cookies are returned, each is output on a new line.
 -b, -cookie KEY VALUE      Set cookies used by the request. Can be specified multiple times.
+-c, -extract-cookies       Extract cookies returned by the call and return as "NAME=VALUE". If multiple cookies are returned, each is output on a new line.
+-post                      Send a POST request without request body. If neither -post nor -data is specified, sends a GET request.
+-X, -request METHOD        Set the HTTP METHOD for the request. Supported values: GET, POST, PUT, DELETE, HEAD, CONNECT, OPTIONS.
 -http STATUS               Add HTTP STATUS as an expected response code. By default only HTTP 200 is expected as correct status.
 
 Connection options:
-
--x, -proxy                 Proxy the request through the specified URL. Can be specified separately for http and https. Example: -proxy https://my.proxy.com:8080.
+-x, -proxy                 Proxy the request through the specified URL. Applies to all protocols unless excluded with "-noproxy". Example: -proxy https://my.proxy.com:8080.
 -noproxy                   Bypass the proxy set by -x for the specified list of |-separated hosts. Supports wildcards. Example: -noproxy my.host.org|*.otherhost.net.
 -connect-timeout           How long to wait, in seconds, for a connection to the remote resource. Defaults to infinity.
 -read-timeout              How long to wait, in seconds, for a response from the remote resource. Defaults to infinity.
 
 Output options:
-
 -t LABEL NODE              Extract NODE from a JSON object returned by the call and return as "LABEL=NODE". Use "." to navigate within the JSON tree. Example: -t uid userSystemInfo.id (returns "uid=12345").
 -a NODE                    Iterate over a JSON array of objects returned by the call content and extract the value of NODE. See -t for more details.
 -v                         Verbose output. Will display request and response details.
@@ -47,8 +45,8 @@ Output options:
 -vvv                       Very very verbose output. Turns on SSL debugging.
 
 General options:
+-K, -config                Read request parameters from a JSON file. The format of the config file is "parameter":"value"; multivalued paramters ("headers", "form", "extract") should be JSON arrays. To display a sample config file, run jcurl -h config.
 
--K, -config                Read request parameters from a JSON file. The format of the config file is "parameter":"value"; multivalued paramters ("headers", "form", "extract") should be JSON objects. To display a sample config file, run jcurl -h config.
 -h, -help                  Display this usage text.
 ```
 
@@ -173,3 +171,18 @@ System.out.println("Stream ID: " + streamId);
 //Print the output of the call
 System.out.println(response.getOutput());       //Prints '{"id": "wFwupr-KY3QW1oEkjE61x3___qsvcXdFdA"}'
 ```
+
+## Contributing
+
+1. Fork it (<https://github.com/symphonyoss/JCurl/fork>)
+2. Create your feature branch (`git checkout -b feature/fooBar`)
+3. Read our [contribution guidelines](.github/CONTRIBUTING.md) and [Community Code of Conduct](https://www.finos.org/code-of-conduct)
+4. Commit your changes (`git commit -am 'Add some fooBar'`)
+5. Push to the branch (`git push origin feature/fooBar`)
+6. Create a new Pull Request
+
+## License
+
+The code in this repository is distributed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+
+Copyright 2016-2019 Symphony LLC

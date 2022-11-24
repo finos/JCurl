@@ -128,10 +128,8 @@ public class JCurl {
   private String trustStore;
   private String trustType;
   private String trustPass;
-  private String httpProxyHost;
-  private String httpProxyPort;
-  private String httpsProxyHost;
-  private String httpsProxyPort;
+  private String proxyHost;
+  private String proxyPort;
   private String nonProxyHosts;
   private int verbosity;
   private PrintStream outStream = System.out ;
@@ -411,7 +409,7 @@ public class JCurl {
     }
 
     /**
-     * Proxy the request through the specified URL. Can be specified separately for http and https.<br>
+     * Proxy the request through the specified URL. Applies to all protocols unless excluded with "-noproxy".<br>
      * Example: {@link #proxy(String) proxy("https://my.proxy.com:8080")}
      * @param proxy
      * @return
@@ -419,15 +417,8 @@ public class JCurl {
     public Builder proxy(String proxy) throws MalformedURLException {
       URL url = new URL(proxy);
 
-      switch (url.getProtocol()) {
-        case "http":
-          instance.httpProxyHost = url.getHost();
-          instance.httpProxyPort = String.valueOf(url.getPort());
-          break;
-        case "https":
-          instance.httpsProxyHost = url.getHost();
-          instance.httpsProxyPort = String.valueOf(url.getPort());
-      }
+      instance.proxyHost = url.getHost();
+      instance.proxyPort = String.valueOf(url.getPort());
 
       return this;
     }
@@ -523,10 +514,10 @@ public class JCurl {
       setSystemProperty("javax.net.ssl.trustStore", instance.trustStore);
       setSystemProperty("javax.net.ssl.trustStoreType", instance.trustType);
       setSystemProperty("javax.net.ssl.trustStorePassword", instance.trustPass);
-      setSystemProperty("http.proxyHost", instance.httpProxyHost);
-      setSystemProperty("http.proxyPort", instance.httpProxyPort);
-      setSystemProperty("https.proxyHost", instance.httpsProxyHost);
-      setSystemProperty("https.proxyPort", instance.httpsProxyPort);
+      setSystemProperty("http.proxyHost", instance.proxyHost);
+      setSystemProperty("http.proxyPort", instance.proxyPort);
+      setSystemProperty("https.proxyHost", instance.proxyHost);
+      setSystemProperty("https.proxyPort", instance.proxyPort);
       setSystemProperty("https.nonProxyHosts", instance.nonProxyHosts);
 
       if (instance.verbosity >= 3) {
@@ -974,7 +965,7 @@ public class JCurl {
 
       System.out.format("%nConnection options:%n");
       printOption("-x, -proxy", "Proxy the request through the specified URL. "
-          + "Can be specified separately for http and https. Example: -proxy https://my.proxy.com:8080.");
+          + "Applies to all protocols unless excluded with \"-noproxy\". Example: -proxy https://my.proxy.com:8080.");
       printOption("-noproxy", "Bypass the proxy set by -x for the specified list of |-separated hosts. "
           + "Supports wildcards. Example: -noproxy my.host.org|*.otherhost.net.");
       printOption("-connect-timeout", "How long to wait, in seconds, for a connection to the remote "
@@ -1045,7 +1036,7 @@ public class JCurl {
     private long timeTaken;
     private String cipherSuite;
     private String output;
-    private String contentType;
+    private String responseContentType;
     private Certificate[] serverCertificates;
     private Certificate[] clientCertificates;
     private Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -1081,7 +1072,7 @@ public class JCurl {
       }
 
       if (output != null) {
-        if ("application/json".equalsIgnoreCase(contentType)) {
+        if ("application/json".equalsIgnoreCase(contentType) && "application/json".equalsIgnoreCase(responseContentType)) {
           printResponseJson();
         } else {
           errStream.println(output);
@@ -1362,7 +1353,7 @@ public class JCurl {
      * @return The MIME type of the response.
      */
     public String getContentType() {
-        return contentType;
+        return responseContentType;
     }
 
     /**
@@ -1631,12 +1622,8 @@ public class JCurl {
       }
     }
 
-    if (httpProxyHost != null) {
-      output.append(String.format("-x %s:%s ", httpProxyHost, httpProxyPort));
-    }
-
-    if (httpsProxyHost != null) {
-      output.append(String.format("-x %s:%s ", httpsProxyHost, httpsProxyPort));
+    if (proxyHost != null) {
+      output.append(String.format("-x %s:%s ", proxyHost, proxyPort));
     }
 
     if (nonProxyHosts != null) {
@@ -1678,7 +1665,7 @@ public class JCurl {
         if ("Content-Type".equalsIgnoreCase(headerName)) {
           String contentType = headerValue.get(0);
           if (contentType != null) {
-            response.contentType = contentType.split(";")[0];
+            response.responseContentType = contentType.split(";")[0];
           }
         } else if ("Set-Cookie".equalsIgnoreCase(headerName)) {
           for (String cookie : headerValue) {
@@ -1741,13 +1728,28 @@ public class JCurl {
     }
   }
 
-  private void processResponseTags(Response response) throws IOException {
-    if (response.output != null && "application/json".equals(response.contentType)) {
+  private void processResponseTags(Response response)  {
+    // Only extract tags if the content type is JSON and the output is not blank
+    if (response.output != null && ! "".equals(response.output.trim())
+        && "application/json".equalsIgnoreCase(this.contentType)
+        && "application/json".equalsIgnoreCase(response.responseContentType)) {
+
+      JsonNode responseJson;
+      try {
+        responseJson = response.getJsonNode();
+      } catch (IOException e) {
+        // If the response JSON is malformed, stop processing
+        return;
+      }
+
+      if (responseJson == null) {
+        return;
+      }
 
       for (Map.Entry<String, String> entry : tagMap.entrySet()) {
         String name = entry.getKey();
         String tag = entry.getValue();
-        JsonNode value = response.getJsonNode();
+        JsonNode value = responseJson;
 
         for (String part : tag.split("\\.")) {
           value = value.get(part);
@@ -1758,7 +1760,7 @@ public class JCurl {
         response.tagMap.put(name, (value != null) ? value.asText() : null);
       }
 
-      for (JsonNode childNode : response.getJsonNode()) {
+      for (JsonNode childNode : responseJson) {
         for (String tag : tagList) {
           JsonNode value = childNode;
 
@@ -1778,6 +1780,10 @@ public class JCurl {
   }
 
   private String buildUrl() {
+    if (queryMap == null || queryMap.isEmpty()) {
+      return url;
+    }
+
     StringBuilder urlBuilder = new StringBuilder(url);
 
     String[] urlParts = url.split("/");
@@ -1799,6 +1805,110 @@ public class JCurl {
     }
 
     return urlBuilder.toString();
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public String getData() {
+    return data;
+  }
+
+  public String getKeyStore() {
+    return keyStore;
+  }
+
+  public String getStoreType() {
+    return storeType;
+  }
+
+  public String getStorePass() {
+    return storePass;
+  }
+
+  public String getTrustStore() {
+    return trustStore;
+  }
+
+  public String getTrustType() {
+    return trustType;
+  }
+
+  public String getTrustPass() {
+    return trustPass;
+  }
+
+  public String getProxyHost() {
+    return proxyHost;
+  }
+
+  public String getProxyPort() {
+    return proxyPort;
+  }
+
+  public String getNonProxyHosts() {
+    return nonProxyHosts;
+  }
+
+  public int getVerbosity() {
+    return verbosity;
+  }
+
+  public int getConnectTimeout() {
+    return connectTimeout;
+  }
+
+  public int getReadTimeout() {
+    return readTimeout;
+  }
+
+  public boolean isTrustAllHostnames() {
+    return trustAllHostnames;
+  }
+
+  public boolean isTrustAllCerts() {
+    return trustAllCerts;
+  }
+
+  public boolean isExtractCookies() {
+    return extractCookies;
+  }
+
+  public List<String> getTagList() {
+    return tagList;
+  }
+
+  public Map<String, String> getTagMap() {
+    return tagMap;
+  }
+
+  public Map<String, String> getFormMap() {
+    return formMap;
+  }
+
+  public Map<String, String> getHeaderMap() {
+    return headerMap;
+  }
+
+  public Map<String, String> getQueryMap() {
+    return queryMap;
+  }
+
+  public Map<String, String> getCookieMap() {
+    return cookieMap;
+  }
+
+  public Set<Integer> getExpectedResponseSet() {
+    return expectedResponseSet;
+  }
+
+  public HttpMethod getMethod() {
+    return method;
+  }
+
+  public String getContentType() {
+    return contentType;
   }
 
 }
