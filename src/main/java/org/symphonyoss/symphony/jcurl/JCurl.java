@@ -566,7 +566,7 @@ public class JCurl {
           }
         }
 
-        SSLContext context = SSLContext.getInstance("SSL");
+        SSLContext context = SSLContext.getInstance("TLSv1.2");
         context.init(keyManagers, trustManagers, new SecureRandom());
         SSLContext.setDefault(context);
         HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
@@ -1373,6 +1373,7 @@ public class JCurl {
   /**
    * A HostnameVerifier which accepts all hostnames. Disables SSL hostname verification.
    */
+  // nosemgrep: java.lang.security.audit.crypto.ssl.insecure-hostname-verifier.insecure-hostname-verifier
   static class AllValidatingHostnameVerifier implements HostnameVerifier {
     @Override
     public boolean verify(String hostname, SSLSession sslSession) {
@@ -1384,6 +1385,7 @@ public class JCurl {
   /**
    * A TrustManager which accepts all certificates. Disables SSL certificate verification.
    */
+  // nosemgrep: java.lang.security.audit.crypto.ssl.insecure-trust-manager.insecure-trust-manager
   static class AllTrustingTrustManager implements X509TrustManager {
 
     @Override
