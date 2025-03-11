@@ -1,7 +1,9 @@
+[![FINOS - Archived](https://cdn.jsdelivr.net/gh/finos/contrib-toolbox@master/images/badge-archived.svg)](https://community.finos.org/docs/governance/Software-Projects/stages/archived)
 [![Licence](https://img.shields.io/badge/licence-Apache%20Licence%20%282.0%29-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/org.symphonyoss.symphony/jcurl.svg)](http://repo1.maven.org/maven2/org/symphonyoss/symphony/jcurl/)
-[![FINOS - Archived](https://cdn.jsdelivr.net/gh/finos/contrib-toolbox@master/images/badge-archived.svg)](https://community.finos.org/docs/governance/Software-Projects/stages/archived)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/6919/badge)](https://bestpractices.coreinfrastructure.org/projects/6919)
+
+This project is archived, which means that it's in read-only state; you can download and use this code, but please be aware that it may be buggy and may also contain security vulnerabilities. If you're interested to restore development activities on this project, please email help@finos.org.
 
 # JCurl
 JSON-aware curl (1) in Java
